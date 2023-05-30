@@ -1,0 +1,100 @@
+﻿@using Grs.BioRestock.Shared.Constants.Application;
+@using Grs.BioRestock.Shared.Enums.BonDeRetour;
+@using Grs.BioRestock.Transfer.DataModels.BonDeRetourDtos;
+@using Microsoft.AspNetCore.SignalR.Client;
+<EditForm Model="@bonDeRetourModel" OnValidSubmit="SaveAsync">
+    <FluentValidationValidator @ref="_fluentValidationValidator" />
+    <MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1" />
+            Choisir le dépot
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField For="@(() => bonDeRetourModel.Id)" @bind-Value="bonDeRetourModel.Id" Label="@Localizer["ID Bon"]" Disabled />
+        <MudTextField For="@(() => bonDeRetourModel.ClientName)" @bind-Value="bonDeRetourModel.ClientName" Label="@Localizer["Nom Article"]" />
+        <MudTextField For="@(() => bonDeRetourModel.ArticleName)" @bind-Value="bonDeRetourModel.ArticleName" Label="@Localizer["Nom Client"]" />
+        <MudSpacer />
+            <InputSelect @bind-Value="bonDeRetourModel.Depot" Variant="Variant.Filled" Label="@Localizer["ID Bon"]" style="width:100%; height:25px; border-radius:5px;">
+        @foreach (var depot in Enum.GetValues(typeof(BonDeRetourDepot)))
+        {
+            
+            <option value="@depot" style="">@depot</option>
+        }
+        </InputSelect>
+
+            
+    </DialogContent>
+    <DialogActions>
+            <MudButton Variant="Variant.Filled" OnClick="Cancel">@Localizer["Annuler"]</MudButton>
+            <MudButton Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled="@(!Validated)" Color="Color.Success">Ajouter dans le dépot</MudButton>    
+</DialogActions>
+ </MudDialog>
+</EditForm>
+
+@code {
+    [Inject] private IBonDeRetourClient _bonDeeRetour { get; set; }
+    [Inject] private IRoleManager RoleManager { get; set; }
+    private FluentValidationValidator _fluentValidationValidator;
+    private bool Validated => _fluentValidationValidator.Validate(options => { options.IncludeAllRuleSets(); });
+    [Parameter] public GetBonDeRetourDto bonDeRetourModel { get; set; } = new();
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] private HubConnection HubConnection { get; set; }
+
+    public void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        HubConnection = HubConnection.TryInitialize(_navigationManager);
+        if (HubConnection.State == HubConnectionState.Disconnected)
+        {
+            await HubConnection.StartAsync();
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        var response = await _bonDeeRetour.ChoixDepotsAsync(bonDeRetourModel);
+        if (response.Succeeded)
+        {
+            _snackBar.Add(response.Messages[0], Severity.Success);
+            await HubConnection.SendAsync(ApplicationConstants.SignalR.SendUpdateDashboard);
+            MudDialog.Close();
+        }
+        else
+        {
+            foreach (var message in response.Messages)
+            {
+                _snackBar.Add(message, Severity.Error);
+            }
+        }
+    }
+ 
+ 
+    //public class ChoixDepot
+    //{
+    //    public ChoixDepot(string name)
+    //    {
+    //        Name = name;
+    //    }
+
+    //    public readonly string Name;
+
+    //    // Note: this is important so the MudSelect can compare pizzas
+    //    public override bool Equals(object o)
+    //    {
+    //        var other = o as ChoixDepot;
+    //        return other?.Name == Name;
+    //    }
+
+    //    // Note: this is important too!
+    //    public override int GetHashCode() => Name?.GetHashCode() ?? 0;
+
+    //    // Implement this for the Pizza to display correctly in MudSelect
+    //    public override string ToString() => Name;
+    //}
+}

@@ -1,0 +1,177 @@
+﻿@page "/listbonderetour"
+
+@using Grs.BioRestock.Shared.Enums.BonDeRetour;
+@using Grs.BioRestock.Transfer.DataModels.BonDeRetourDtos
+
+@if (!_loaded)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+  <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <MudTabPanel Text="Liste Bon">
+            <div class="mb-2 align-content: center;" Style="width: 100%">
+                <MudContainer Style="padding:0; margin:0; width:100%;">
+                    <MudTable Items="@allBonDeRetours.Where(c => c.Status != bonDeRetourStatut)" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loaded" LoadingProgressColor="Color.Info">
+                        <HeaderContent>
+                            <MudTh>id</MudTh>
+                            <MudTh>Code</MudTh>
+                            <MudTh>Nom Client</MudTh>
+                            <MudTh>Nom Article</MudTh>
+                            <MudTh>Lot Produit</MudTh>
+                            <MudTh>Réference</MudTh>
+                            <MudTh>Quantité</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Action</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Id">@context.Id</MudTd>
+                            <MudTd DataLabel="Code">@context.ArticleName</MudTd>
+                            <MudTd DataLabel="Nom Client">@context.ClientName</MudTd>
+                            <MudTd DataLabel="Lot Produit">@context.AnomalyType</MudTd>
+                            <MudTd DataLabel="Réference">@context.Reference</MudTd>
+                            <MudTd DataLabel="Quantité">@context.Quantity</MudTd>
+                            <MudTd DataLabel="Status">@context.Status</MudTd>
+                            <MudTd>
+                                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteDeRetour(@context.Id))">Delete</MudButton>
+                                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary" OnClick="@(()=>UpdateBonDeRetour(@context.Id))">Update</MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager />
+                        </PagerContent>
+                    </MudTable>
+                </MudContainer> 
+            </div>
+        </MudTabPanel>
+        <MudTabPanel Text="Bon Validé">
+            <div class="mb-2 align-content: center;" Style="width: 100%">
+                <MudContainer Style="padding:0; margin:0; width:100%;">
+                    <MudTable Items="@allBonDeRetours.Where(c => c.Status == bonDeRetourStatut)" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loaded" LoadingProgressColor="Color.Info">
+                        <HeaderContent>
+                            <MudTh>id</MudTh>
+                            <MudTh>Code</MudTh>
+                            <MudTh>Nom Client</MudTh>
+                            <MudTh>Nom Article </MudTh>
+                            <MudTh>Lot Produit </MudTh>
+                            <MudTh>Réference </MudTh>
+                            <MudTh>Quantité </MudTh>
+                            <MudTh>Status </MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Id">@context.Id</MudTd>
+                            <MudTd DataLabel="Code">@context.ArticleName</MudTd>
+                            <MudTd DataLabel="Nom Client">@context.ClientName</MudTd>
+                            <MudTd DataLabel="Lot Produit">@context.AnomalyType</MudTd>
+                            <MudTd DataLabel="Réference">@context.Reference</MudTd>
+                            <MudTd DataLabel="Quantité">@context.Quantity</MudTd>
+                            <MudTd DataLabel="Status" Style="color:red;">@context.Status</MudTd>
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager />
+                        </PagerContent>
+                    </MudTable>
+                </MudContainer>        
+            </div>
+        </MudTabPanel>
+    </MudTabs> 
+    @if (_global.IsMobileView)
+    {
+        <div style="margin-bottom: 55px"></div>
+        <MudAppBar Bottom="true" Fixed="true" Color="Color.Primary" Elevation="1" Class="mobile-footer-barr">
+            <MudIconButton Icon="@Icons.Material.Filled.KeyboardReturn" Style="background-color: #114e46;color: white" Edge="Edge.Start"
+                   OnClick="@(()=>_navigationManager.NavigateTo("/"))" />
+
+            @if (_global.IsLoading)
+            {
+                <MudProgressLinear Color="Color.Tertiary" Indeterminate="true" Size="Size.Medium" Class="mx-3" />
+            }
+            else
+            {
+                <MudSpacer />
+                <MudButton Disabled="_global.IsLoading" Variant="Variant.Filled" StartIcon="@Icons.Outlined.Add"
+               Style="background-color: #114e46;color: white;border-radius: 24px;box-sizing: content-box;" Size="Size.Large"
+               OnClick="@(() =>  _navigationManager.NavigateTo($"/ajout_bon_de_retour"))">Ajouter un Bon</MudButton>
+            }
+        </MudAppBar>
+    }
+}
+
+
+@code {
+    //private bool _hidePosition;
+    private bool _loaded;
+    [Inject] private IBonDeRetourClient _bonDeeRetour { get; set; }
+    public BonDeRetourStatus bonDeRetourStatut { get; set; } = BonDeRetourStatus.Validé;
+
+    private List<GetBonDeRetourDto> allBonDeRetours = new List<GetBonDeRetourDto>();
+    private GetBonDeRetourDto bonDeRetourx = new();
+    public AddBonDeRetourDto ModelbonDeRetour { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetBonDeRetour();
+    }
+
+    private async Task GetBonDeRetour()
+    {
+        try
+        {
+            var response = await _bonDeeRetour.GetAllAsync();
+            if (response.Succeeded)
+            {
+                allBonDeRetours = response.Data.ToList();
+                _loaded = true;
+            }
+        }
+        catch(Exception)
+        {
+            throw;
+        }
+    }
+
+    private async Task DeleteDeRetour(int id)
+    {
+        string deleteContent = Localizer["Delete Content"];
+        var parameters = new DialogParameters
+        {
+          { nameof(Shared.Dialogs.DeleteConfirmationDialog.ContentText), string.Format(deleteContent, id) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.DeleteConfirmationDialog>(Localizer["Delete"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            var response = await _bonDeeRetour.DeleteAsync(id);
+            if (response.Succeeded)
+            {
+                await Reset();
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                await GetBonDeRetour();
+            }
+            else
+            {
+                await Reset();
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
+            }
+        }
+
+
+
+    }
+    private  void UpdateBonDeRetour(int id)
+    {
+        _navigationManager.NavigateTo($"/edit_bon_de_retour/{id}");
+    }
+
+    private async Task Reset()
+    {
+        bonDeRetourx = new GetBonDeRetourDto();
+        await GetBonDeRetour();
+    }
+
+}

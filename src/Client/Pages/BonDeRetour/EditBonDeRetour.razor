@@ -1,0 +1,114 @@
+﻿@page "/edit_bon_de_retour/{Id:int}"
+
+@using System.ComponentModel.DataAnnotations
+@using Grs.BioRestock.Transfer.DataModels.BonDeRetourDtos;
+
+
+<EditForm Model="@ModelbonDeRetour" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12" sm="7">
+                <MudCard>
+                    <MudCardContent>
+                    <MudTextField For="@(() => ModelbonDeRetour.Id)" @bind-Value="bondeRetour.Id" Label="@Localizer["ID Bon"]" Disabled />
+                    <MudTextField For="@(() => ModelbonDeRetour.ClientName)" @bind-Value="bondeRetour.ClientName" Label="@Localizer["Nom Article"]" />
+                    <MudTextField For="@(() => ModelbonDeRetour.ArticleName)" @bind-Value="bondeRetour.ArticleName" Label="@Localizer["Nom Client"]" />
+                        <MudTextField For="@(() => bondeRetour.Code)" @bind-Value="bondeRetour.Code" Label="@Localizer["Code"]" />
+                        <MudTextField For="@(() => bondeRetour.Depot)" @bind-Value="bondeRetour.Depot" Label="@Localizer["Depot"]" />
+                        <MudTextField For="@(() => bondeRetour.Reference)" @bind-Value="bondeRetour.Reference" Label="@Localizer["Reference"]" />
+                        <MudTextField For="@(() => bondeRetour.Quantity)" @bind-Value="bondeRetour.Quantity" Label="@Localizer["Quantity"]" />
+                        <MudTextField For="@(() => bondeRetour.Status)" @bind-Value="bondeRetour.Status" Label="@Localizer["Status"]" />
+                    </MudCardContent>
+
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Update</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="5">
+                <MudPaper Class="pa-4 mud-height-full">
+                    <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
+                    @if (success)
+                    {
+                        <MudText Color="Color.Success">Success</MudText>
+                    }
+                    else
+                    {
+                        <MudText Color="@Color.Error">
+                            <ValidationSummary />
+                        </MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.body2" Align="Align.Center">
+                    Fill out the form correctly to see the success message.
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+    {
+<div style="margin-bottom: 55px"></div>
+<MudAppBar Bottom="true" Fixed="true" Color="Color.Primary" Elevation="1" Class="mobile-footer-barr">
+    <MudIconButton Icon="@Icons.Material.Filled.KeyboardReturn" Style="background-color: #114e46;color: white" Edge="Edge.Start"
+                   OnClick="@(()=>_navigationManager.NavigateTo("/ajout_bon_de_retour"))" />
+
+</MudAppBar>
+}
+
+@code {
+    private bool _loaded;
+    [Inject] private IBonDeRetourClient _bonDeRetourClient { get; set; }
+    [Parameter]
+    public AddBonDeRetourDto ModelbonDeRetour { get; set; } = new();
+    bool success;
+
+    public GetBonDeRetourDto bondeRetour { get; set; }
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var raw = await _bonDeRetourClient.GetByIdAsync(Id);
+            if (raw.Succeeded)
+                bondeRetour = raw.Data;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+
+        string updateContent = Localizer["Voulez-vous Modifier ?"];
+        var parameters = new DialogParameters
+        {
+          { nameof(Shared.Dialogs.ConfirmationDialog.ContentText), string.Format(updateContent) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.ConfirmationDialog>(Localizer["Modifier"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            var response = await _bonDeRetourClient.AddAsync(ModelbonDeRetour);
+            if (response.Succeeded)
+            {
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                _navigationManager.NavigateTo($"/listbonderetour");
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
+            }
+        }
+    }
+ 
+}

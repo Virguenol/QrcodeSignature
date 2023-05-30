@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{C9B6FBC4-76CE-4F59-AEED-C1069EE3C924}"
+	ProjectSection(FolderStartupServices) = postProject
+		{C0C07587-41A7-46C8-8FBD-3F9C8EBE2DDC} = {C0C07587-41A7-46C8-8FBD-3F9C8EBE2DDC}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reports", "src\Reports\Reports.csproj", "{3927FC6F-2E08-4766-B4C1-8C5A03B8B668}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3927FC6F-2E08-4766-B4C1-8C5A03B8B668}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3927FC6F-2E08-4766-B4C1-8C5A03B8B668}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3927FC6F-2E08-4766-B4C1-8C5A03B8B668}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3927FC6F-2E08-4766-B4C1-8C5A03B8B668} = {C9B6FBC4-76CE-4F59-AEED-C1069EE3C924}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ED3E6669-AEC5-4A3B-9E57-2A81DE87BAAF}
+	EndGlobalSection
+EndGlobal

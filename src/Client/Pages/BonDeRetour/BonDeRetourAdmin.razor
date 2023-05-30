@@ -1,0 +1,191 @@
+﻿@page "/BonDeRetour/admin_bonderetour"
+
+@using Grs.BioRestock.Shared.Enums.BonDeRetour;
+@using Grs.BioRestock.Transfer.DataModels.BonDeRetourDtos
+
+@if (!_loaded)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <div class="mb-2 align-content: center;" Style="width: 100%">
+
+        <MudPaper Elevation="25" Style="width:100%; height:100vh;">
+            <MudToolBar>
+                <MudTextField @bind-Value="_searchString" Immediate="true" Placeholder="@Localizer["Rechercher des Bons..."]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" Style="width:50%; align-items:center;"></MudTextField>
+                @*<MudSpacer />  *@
+            </MudToolBar>
+        <MudContainer>
+            @* <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Style="margin-bottom:5px;" OnClick="@(() =>_navigationManager.NavigateTo($"/ajout_bon_de_retour"))">Add</MudButton>*@
+            <MudTable Items="@allBonDeRetours.Where(b => b.Status == bonDeRetourStatut)" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loaded" LoadingProgressColor="Color.Info"
+                      Filter="new Func<GetBonDeRetourDto, bool>(Search)" @bind-role="bonDeRetourx">
+                <HeaderContent>
+                    <MudTh>id</MudTh>
+                    <MudTh>Code</MudTh>
+                    <MudTh>Nom Client</MudTh>
+                    <MudTh>Nom Article </MudTh>
+                    <MudTh>Lot Produit </MudTh>
+                    <MudTh>Réference </MudTh>
+                    <MudTh>Quantité </MudTh>
+                    <MudTh>Status </MudTh>
+                    <MudTh>Action</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Id">@context.Id</MudTd>
+                    <MudTd DataLabel="Code">@context.Code</MudTd>
+                    <MudTd DataLabel="Nom Client">@context.ClientName</MudTd>
+                    <MudTd DataLabel="Nom Article">@context.ArticleName</MudTd>
+                    <MudTd DataLabel="Lot Produit">@context.AnomalyType</MudTd>
+                    <MudTd DataLabel="Réference">@context.Reference</MudTd>
+                    <MudTd DataLabel="Quantité">@context.Quantity</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteDeRetour(@context.Id))"></MudButton>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary" OnClick="@(()=>Valider(@context.Id))"></MudButton>
+                    </MudTd>
+                </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager />
+                    </PagerContent>
+            </MudTable>
+        </MudContainer>
+        </MudPaper>
+    </div>
+    
+        
+}
+
+
+@code {
+    private bool _loaded;
+    [Inject] private IBonDeRetourClient _bonDeeRetour { get; set; }
+
+    private List<GetBonDeRetourDto> allBonDeRetours = new List<GetBonDeRetourDto>();
+    private GetBonDeRetourDto bonDeRetourx = new();
+    public AddBonDeRetourDto ModelbonDeRetour { get; set; } = new();
+    public AddBonDeRetourDto bondeRetour { get; set; }
+    public BonDeRetourStatus bonDeRetourStatut { get; set; } = BonDeRetourStatus.Nouveau;
+
+    private string _searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetBonDeRetour();
+    }
+
+    private async Task GetBonDeRetour()
+    {
+        try
+        {
+            var response = await _bonDeeRetour.GetAllAsync();
+            if (response.Succeeded)
+            {
+                allBonDeRetours = response.Data.ToList();
+                _loaded = true;
+            }
+        }
+        catch(Exception)
+        {
+            throw;
+        }
+    }
+
+
+    //private async Task DeleteDeRetour(int id)
+    //{
+    //    try
+    //    {
+    //        var response = await _bonDeeRetour.DeleteAsync(id);
+    //        if (response.Succeeded)
+    //        {
+    //            _snackBar.Add(response.Messages[0], Severity.Success);
+    //            await GetBonDeRetour();
+    //        }
+    //    }
+    //    catch (Exception)
+    //    {
+    //        throw;
+    //    }
+    //}
+    private async Task DeleteDeRetour(int id)
+    {
+        string deleteContent = Localizer["Delete Content"];
+        var parameters = new DialogParameters
+        {
+          { nameof(Shared.Dialogs.DeleteConfirmationDialog.ContentText), string.Format(deleteContent, id) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.DeleteConfirmationDialog>(Localizer["Delete"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            var response = await _bonDeeRetour.DeleteAsync(id);
+            if (response.Succeeded)
+            {
+                await Reset();
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                await GetBonDeRetour();
+            }
+            else
+            {
+                await Reset();
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
+            }
+        }
+
+
+
+    }
+
+    private  async Task Valider(int id)
+    {
+        string updateContent = Localizer["Voulez-vous valider ce bon de retour"];
+        var parameters = new DialogParameters
+        {
+          { nameof(Shared.Dialogs.ConfirmationDialog.ContentText), string.Format(updateContent) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.ConfirmationDialog>(Localizer["Modifier"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            var response = await _bonDeeRetour.ValidationAsync(id);
+            if (response.Succeeded)
+            {
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                await GetBonDeRetour();
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
+            }
+        }
+    }
+    private async Task Reset()
+    {
+        bonDeRetourx = new GetBonDeRetourDto();
+        await GetBonDeRetour();
+    }
+
+    private bool Search(GetBonDeRetourDto _bonDeRetourx)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        if (_bonDeRetourx.Reference?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return true;
+        }
+        if (_bonDeRetourx.Code?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return true;
+        }
+        return false;
+    }
+}
+

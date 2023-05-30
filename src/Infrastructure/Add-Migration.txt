@@ -1,0 +1,3 @@
+﻿// https://learn.microsoft.com/fr-fr/ef/core/get-started/overview/install
+
+   EntityFrameworkCore\Add-Migration -Project "Infrastructure" -StartupProject "Server" -OutputDir  Migrations "00001"

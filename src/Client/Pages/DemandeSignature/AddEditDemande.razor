@@ -1,0 +1,90 @@
+﻿@page "/demandesignature/ajouter"
+@using Grs.BioRestock.Transfer.DataModels.Demandesignature;
+@using System.IO;
+@using Microsoft.Extensions.Configuration;
+@inject IConfiguration config
+
+
+<h3>AddEditDemande</h3>
+<EditForm Model="ModelDemande" OnValidSubmit="SubmitForm">
+
+    <div>
+        <label for="fileName">File:</label>
+        <InputFile OnChange="@LoadFiles" class="form-control" accept=".png,.jpg,.jpeg" />
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">Create Customer</button>
+</EditForm>
+
+
+@code {
+    private const long MAX_FILE_SIZE = 1024*1024*10;
+    private List<string> errors = new();
+
+    [Inject] private IDemandeSignatureClient _demandeSignature { get; set; }
+
+    private List<DemandeSingatureDto> allDemandes = new();
+    public DemandeSingatureDto ModelDemande { get; set; } = new();
+
+    private IBrowserFile file;
+
+    private async Task SubmitForm()
+    {
+        try
+        {
+            string relativePath = await CaptureFile();
+            ModelDemande.FileUrl = relativePath;
+            var response = await _demandeSignature.AddEditAsync(ModelDemande);
+            if (response.Succeeded)
+            {
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                _navigationManager.NavigateTo($"/listbonderetour");
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Error: {ex.Message}");
+        }
+    }
+
+    private void LoadFiles(InputFileChangeEventArgs e)
+    {
+        file = e.File;
+    }
+
+    private async Task<string> CaptureFile()
+    {
+        if (file is null)
+        {
+            return "";
+        }
+
+        try
+        {
+            string newFileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(file.Name));
+
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\Document", "Archange", newFileName);
+
+            string relativePath = Path.Combine("Archange", newFileName);
+
+            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\Document", "Archange"));
+
+            await using FileStream fs = new(path, FileMode.Create);
+            await file.OpenReadStream(MAX_FILE_SIZE).CopyToAsync(fs);
+
+            return relativePath;
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"File: {file.Name} Error: {ex.Message}");
+            throw;
+        }
+    }
+}

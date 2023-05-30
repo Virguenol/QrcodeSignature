@@ -1,0 +1,210 @@
+﻿@page "/"
+@page "/Home"
+@using System.Security.Claims
+@using System.Threading
+@using Grs.BioRestock.Client.Infrastructure.ApiClients;
+@using Grs.BioRestock.Shared.Constants.Application
+@using Timer = System.Timers.Timer
+
+<style>
+
+    .HomeButton {
+        height: calc(74% - 0px);
+        padding: 3px;
+    }
+
+    .HomeText {
+        font-weight: bold;
+        font-size: 19px
+    }
+
+    .HomeButtonCard {
+        /*     border-end-start-radius: 25px;
+                border-end-end-radius: 25px;
+                border-start-start-radius: 25px;
+                      border-start-end-radius: 15px;   */
+    }
+
+    .Acceuil {
+        padding-top: 10%;
+        /*background-image: url('images/bonreturf.jpg');*/
+        background-image: linear-gradient(to top, rgba(255, 255, 255, 0.8), rgba(16, 79, 70, 0.8)), url('images/bondereouraccueil.jpg');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+        width: 100%;
+        height: 100vh;
+        position:fixed;
+    }
+    /*.Acceuil{   
+        background-color:red; 
+    }*/
+    .containere {
+        margin:0;
+        padding:0;
+        display: block;
+        margin-top: 50px;
+        /*margin-right: auto*/
+    }
+    .btnListe {
+        padding: 8px 100px;
+    }
+
+</style>
+@if (_global.IsMobileView)
+{
+    <MudLayout Class="Acceuil">
+     <MudContainer Class="containere">
+        <MudText Typo="Typo.h3" Style="font-size:25px;text-align:center;color:#fff">GESTION DES BONS DE RETOUR</MudText>
+        <MudSpacer/>
+        <MudImage Src="images/bondereouraccueil.jpg" Width="332" Height="250" Alt="Swedish Farm House" Elevation="25" Class="rounded-lg ma-4"/>
+        <MudSpacer />
+        <MudContainer MaxWidth="MaxWidth.Small">
+            <MudButton Disabled="_global.IsLoading" Variant="Variant.Filled" StartIcon="@Icons.Outlined.ListAlt"
+                   Style="background-color: #114e46;color: white;border-radius: 24px;box-sizing: content-box; text-align:center;" Size="Size.Large"
+                       OnClick="@(() =>  _navigationManager.NavigateTo($"/listbonderetour"))" Class="btnListe">Voir la liste</MudButton>
+
+            @*<MudButton Disabled="_global.IsLoading" Variant="Variant.Filled" StartIcon="@Icons.Outlined.ListAlt"
+                   Style="background-color: #114e46;color: white;border-radius: 24px;box-sizing: content-box;" Size="Size.Large"
+                   OnClick="@(() =>  _navigationManager.NavigateTo($"#"))" Class="">Validé</MudButton>*@
+        </MudContainer>
+     </MudContainer>
+    </MudLayout>
+    <!-- FOOTER BAR -->
+    <div style="margin-bottom: 53px;"></div>
+    <MudAppBar Bottom="true" Fixed="true" Color="Color.Primary" Elevation="1" Class="mobile-footer-barr">
+        <MudIconButton Disabled="_global.IsLoading" Icon="@Icons.Material.Filled.Settings" Style="background-color: #114e46;color: white" Edge="Edge.Start"
+                   OnClick="ShowSettings" />
+
+        @if (_global.IsLoading)
+        {
+            <MudProgressLinear Color="Color.Tertiary" Indeterminate="true" Size="Size.Medium" Class="mx-3" />
+        }
+        else
+        {
+            <MudSpacer />
+            <MudButton Disabled="_global.IsLoading" Variant="Variant.Filled" StartIcon="@Icons.Outlined.Add"
+               Style="background-color: #114e46;color: white;border-radius: 24px;box-sizing: content-box;" Size="Size.Large"
+               OnClick="@(() =>  _navigationManager.NavigateTo($"/ajout_bon_de_retour"))">Ajouter un Bon</MudButton>
+        }
+    </MudAppBar>
+}
+else
+{
+    <table style="height:calc(100vh - 116px);width:calc(100% - 6px);overflow: auto;">
+        <tr>
+            <td>
+                <MudGrid Spacing="1" Justify="Justify.Center">
+                    <MudStack>
+
+                        <MudText Typo="Typo.h1">
+                            @ApplicationConstants.AppName @ApplicationConstants.AppVersion
+                        </MudText>
+
+                        @if (_global.IsLoading)
+                        {
+                            <MudProgressLinear Color="Color.Tertiary" Indeterminate="true" Size="Size.Medium" />
+                        }
+                    </MudStack>
+                </MudGrid>
+            </td>
+        </tr>
+    </table>
+}
+
+@code {
+
+    private ClaimsPrincipal _authenticationStateProviderUser;
+    protected override async Task OnParametersSetAsync()
+    {
+        _authenticationStateProviderUser = await _stateProvider.GetAuthenticationStateProviderUserAsync();
+
+    }
+
+    protected bool CanView(string permission) => (_authorizationService.AuthorizeAsync(_authenticationStateProviderUser, permission).GetAwaiter().GetResult()).Succeeded;
+    protected override async Task OnInitializedAsync()
+    {
+        _global.CurrentTitle = ApplicationConstants.AppName + " " + @ApplicationConstants.AppVersion;
+        await UpdateApplication();
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        SetLoading(true);
+        try
+        {
+       
+            //var myresponse = await _animationClient.GetRealisationAsync();
+            //if (myresponse.Succeeded)
+            //{
+            //    _ListRealisation = myresponse.Data ?? new List<VwRealisationDTO>();
+            //    _ListCurrentRealisation = _ListRealisation.Where(o => o.Annee == DateTime.Now.Year
+            //                                                          && o.Mois == DateTime.Now.Month).ToList() ?? new List<VwRealisationDTO>();
+
+
+            //}
+            //else
+            //{
+            //    await _dialogService.ShowErrors(myresponse.Messages);
+            //}
+        }
+        catch (HttpRequestException)
+        {
+            _snackBar.Add(Localizer["Vous êtes hors ligne !"]);
+        }
+        catch (Exception e)
+        {
+            await _dialogService.ShowErrors(e);
+        }
+
+        SetLoading(false);
+    }
+
+    [Inject] private IVersionClient _IVersionClient { get; set; }
+    private async Task UpdateApplication()
+    {
+        try
+        {
+            var response = await _IVersionClient.AppVersionAsync();
+            if (response.Succeeded)
+            {
+                if (ApplicationConstants.AppVersion != response.Data)
+                {
+                    _snackBar.Add(Localizer["Mise à jour lancé ..."], Severity.Info);
+                    await InvokeClearApplicationCache();
+                }
+
+            }
+
+        }
+        catch (HttpRequestException)
+        {
+            _snackBar.Add(Localizer["Vous êtes hors ligne !"], Severity.Warning);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+
+    private void SetLoading(bool val)
+    {
+        _global.IsLoading = val;
+        StateHasChanged();
+    }
+
+
+    private void ShowSettings()
+    {
+        _navigationManager.NavigateTo($"/account");
+    }
+
+    private async Task InvokeClearApplicationCache()
+    {
+        await _jsRuntime.InvokeVoidAsync("ClearApplicationCache");
+    }
+
+
+
+}

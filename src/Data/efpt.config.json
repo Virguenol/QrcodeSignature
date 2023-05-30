@@ -1,0 +1,165 @@
+﻿{
+   "CodeGenerationMode": 2,
+   "ContextClassName": "UniContext",
+   "ContextNamespace": "Grs.BioRestock.Infrastructure.Contexts",
+   "DefaultDacpacSchema": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "ModelNamespace": "Grs.BioRestock.Domain.Entities",
+   "OutputContextPath": "Contexts",
+   "OutputPath": "Entities",
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 0,
+   "SelectedToBeGenerated": 0,
+   "Tables": [
+      {
+         "Name": "[dbo].[Batch]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Bulletin]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Commentaire]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Commune]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ComptePaie]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Contrat]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ContratAttribut]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ContratAttributHistorique]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ContratCalcule]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ContratType]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ContratTypeAttribut]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ContratTypeIntervale]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Declaration]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Demande]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DemandeConge]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DemandeValidation]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Notice]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Parametres]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Periode]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PeriodeHistorique]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PlanDePaie]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PlanDetail]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Salarie]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SalarieRib]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SalarieType]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Societe]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Tenant]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Utilisateur]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UtilisateurAcces]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UtilisateurLogin]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UtilisateurRole]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VwBulletin]",
+         "ObjectType": 3
+      }
+   ],
+   "UiHint": "DESKTOP-4MF0HFO.UNIPAIE_DNA",
+   "UncountableWords": null,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDateOnlyTimeOnly": false,
+   "UseDbContextSplitting": false,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UseSchemaFolders": false,
+   "UseSpatial": false,
+   "UseT4": false
+}

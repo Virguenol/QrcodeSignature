@@ -1,0 +1,171 @@
+﻿@page "/BonDeRetour/user_bonderetour"
+
+@using Grs.BioRestock.Shared.Enums.BonDeRetour;
+@using Grs.BioRestock.Transfer.DataModels.BonDeRetourDtos
+@inject IDialogService DialogService
+
+@if (!_loaded)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <div class="mb-2 align-content: center;" Style="width: 100%">
+         <MudPaper Elevation="25" Style="width:100%; height:100vh;">
+            <MudToolBar>
+                <MudTextField @bind-Value="_searchString" Immediate="true" Placeholder="@Localizer["Rechercher des Bons..."]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" Style="position:relative; left:0;width:50%;"></MudTextField>
+                <MudSpacer />         
+            </MudToolBar>
+            <MudContainer>
+            <MudTable Items="@allBonDeRetoursUser.Where(b => b.Status == bonDeRetourStatut)" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loaded" LoadingProgressColor="Color.Info"
+                  Filter="new Func<GetBonDeRetourDto, bool>(Search)" @bind-role="bonDeRetourx">
+
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel SortBy="new Func<GetBonDeRetourDto, object>(x => x.Id)">id</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<GetBonDeRetourDto, object>(x => x.Code)">Code</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<GetBonDeRetourDto, object>(x => x.ClientName)">Nom Client</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<GetBonDeRetourDto, object>(x => x.ArticleName)">Nom Article</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<GetBonDeRetourDto, object>(x => x.AnomalyType)">Lot Produit</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<GetBonDeRetourDto, object>(x => x.Reference)">Réference</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<GetBonDeRetourDto, object>(x => x.Quantity)">Quantité</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<GetBonDeRetourDto, object>(x => x.Status)">Status</MudTableSortLabel></MudTh>
+                    <MudTh>Action</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Id">@context.Id</MudTd>
+                    <MudTd DataLabel="@Localizer["Code"]">
+                        <MudHighlighter Text="@context.Code" HighlightedText="@_searchString" />
+                    </MudTd>
+                    <MudTd DataLabel="Nom Client">@context.ClientName</MudTd>
+                    <MudTd DataLabel="Nom Article">@context.ArticleName</MudTd>
+                    <MudTd DataLabel="Lot Produit">@context.AnomalyType</MudTd>
+                    <MudTd DataLabel="@Localizer["Reference"]">
+                        <MudHighlighter Text="@context.Reference" HighlightedText="@_searchString" />
+                    </MudTd>
+                    <MudTd DataLabel="Quantité">@context.Quantity</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+
+                    <MudTd DataLabel="Actions" Style="text-align: right">
+                        @if (context.Depot == 0)
+                        {
+                            <MudButton Variant="Variant.Filled"
+                               DisableElevation="true"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               IconColor="Color.Secondary"
+                               Size="Size.Small"
+                               Color="Color.Primary" OnClick="(() => InvokeModal(Convert.ToString(context.Id)))">
+                                Depot
+                            </MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Variant="Variant.Filled"
+                               DisableElevation="true"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               IconColor="Color.Secondary"
+                               Size="Size.Small"
+                               Color="Color.Primary">
+                                Evoyer
+                            </MudButton>
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudContainer>
+        </MudPaper>
+         
+        @*<DialogDepot></DialogDepot>*@
+    </div>
+}
+
+
+@code {
+    //private bool _hidePosition;
+    private bool _loaded;
+    [Inject] private IBonDeRetourClient _bonDeeRetour { get; set; }
+    private List<GetBonDeRetourDto> allBonDeRetoursUser = new List<GetBonDeRetourDto>();
+    private GetBonDeRetourDto bonDeRetourx = new();
+    public AddBonDeRetourDto ModelbonDeRetour { get; set; } = new();
+    public BonDeRetourStatus bonDeRetourStatut { get; set; } = BonDeRetourStatus.Validé;
+
+    private string _searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetBonDeRetourUser();
+    }
+
+    private async Task GetBonDeRetourUser()
+    {
+        try
+        {
+            var response = await _bonDeeRetour.GetAllAsync();
+            if (response.Succeeded)
+            {
+                allBonDeRetoursUser = response.Data.ToList();
+                _loaded = true;
+            }
+        }
+        catch(Exception)
+        {
+            throw;
+        }
+    }
+   
+
+    private async Task InvokeModal(string id)
+    {
+        var parameters = new DialogParameters();
+        if (id != null)
+        {
+            bonDeRetourx = allBonDeRetoursUser.FirstOrDefault(c => c.Id == Convert.ToInt32(id));
+            if (bonDeRetourx != null)
+            {
+                parameters.Add(nameof(ModelBondeRetour.bonDeRetourModel), new GetBonDeRetourDto
+                    {
+                        Id = bonDeRetourx.Id,
+                        ArticleName = bonDeRetourx.ArticleName,
+                        ClientName = bonDeRetourx.ClientName
+                    });
+            }
+        }
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<ModelBondeRetour>(id == null ? Localizer["Create"] : Localizer["Edit"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            await Reset();
+        }
+    }
+
+    private async Task Reset()
+    {
+        bonDeRetourx = new GetBonDeRetourDto();
+        await GetBonDeRetourUser();
+    }
+
+    private bool Search(GetBonDeRetourDto _bonDeRetourx)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        if (_bonDeRetourx.Reference?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return true;
+        }
+        if (_bonDeRetourx.Code?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+}
+  
+
+

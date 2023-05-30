@@ -1,0 +1,69 @@
+﻿@page "/demandesignature/liste"
+@using Grs.BioRestock.Transfer.DataModels.Demandesignature;
+
+<h3>ListeDemandeSignature</h3>
+<MudTable Items="@allDemandes">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Periodic Elements</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => AddDemande())">Primary</MudButton>
+        <MudSpacer />
+@*        <MudTextField @bind-Value="" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+*@    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Id</MudTh>
+        <MudTh>Designation</MudTh>
+        <MudTh>Nom client</MudTh>
+        <MudTh>Data Etablissemet</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nr">@context.Id</MudTd>
+        <MudTd DataLabel="Sign">@context.Designation</MudTd>
+        <MudTd DataLabel="Name">@context.NomClient</MudTd>
+        <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code{
+
+    [Inject] private IDemandeSignatureClient _demandeSignature { get; set; }
+
+    private List<DemandeSingatureDto> allDemandes = new ();
+    private DemandeSingatureDto Demande = new();
+    public DemandeSingatureDto ModelDemande { get; set; } = new();
+    public bool _loaded;
+    private void searchString()
+    {
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetDemande();
+    }
+
+    private async Task GetDemande()
+    {
+        try
+        {
+            var response = await _demandeSignature.GetAllAsync();
+            if (response.Succeeded)
+            {
+                allDemandes = response.Data.ToList();
+                _loaded = true;
+            }
+        }
+        catch(Exception)
+        {
+            throw;
+        }
+    }
+
+    private void AddDemande()
+    {
+        _navigationManager.NavigateTo($"/demandesignature/ajouter");
+    }
+   
+}

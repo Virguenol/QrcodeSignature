@@ -1,0 +1,106 @@
+﻿@page "/ajout_bon_de_retour"
+
+@using System.ComponentModel.DataAnnotations
+@using Grs.BioRestock.Transfer.DataModels.BonDeRetourDtos;
+@using Grs.BioRestock.Transfer.DataModels.Article;
+
+<EditForm Model="@ModelbonDeRetour" OnValidSubmit="SaveAsync">
+    <DataAnnotationsValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Code retour" HelperText="Max. 8 characters" @bind-Value="ModelbonDeRetour.Code" For="@(() => ModelbonDeRetour.Code)" />
+                    <MudTextField Label="Name retour"@bind-Value="ModelbonDeRetour.ArticleName" For="@(() => ModelbonDeRetour.ArticleName)" />
+                    <MudTextField Label="Name Article" HelperText="Max. 8 characters" @bind-Value="ModelbonDeRetour.ClientName" For="@(() => ModelbonDeRetour.ClientName)" />
+@*                    <MudTextField Label="Lot article" HelperText="Max. 8 characters" @bind-Value="ModelbonDeRetour.AnomalyType" For="@(() => ModelbonDeRetour.AnomalyType)" />
+*@                    <InputSelect @bind-Value="ModelbonDeRetour.AnomalyType" Label="Lot article" Variant="Variant.Filled" style="width:100%; height:25px; border-radius:5px;">
+                        @foreach (var depot in Enum.GetValues(typeof(AnomalyType)))
+                        {
+                            <option value="@depot" style="">@depot</option>
+                        }
+                    </InputSelect>
+                    <MudTextField Label="Réfrence" HelperText="Max. 8 characters" @bind-Value="ModelbonDeRetour.Reference" For="@(() => ModelbonDeRetour.Reference)" />
+                    <MudTextField Label="Quantité" HelperText="Max. 8 characters" @bind-Value="ModelbonDeRetour.Quantity" For="@(() => ModelbonDeRetour.Quantity)" />
+                    <MudTextField Label="Status" HelperText="Max. 8 characters" @bind-Value="ModelbonDeRetour.Status" For="@(() => ModelbonDeRetour.Status)" Disabled="true" />
+
+
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="5">
+            <MudPaper Class="pa-4 mud-height-full">
+                <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
+                @if (success)
+                {
+                    <MudText Color="Color.Success">Success</MudText>
+                }
+                else
+                {
+                    <MudText Color="@Color.Error">
+                        <ValidationSummary />
+                    </MudText>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Align="Align.Center">
+                Fill out the form correctly to see the success message.
+            </MudText>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+@if (_global.IsMobileView)
+{
+    <div style="margin-bottom: 55px"></div>
+    <MudAppBar Bottom="true" Fixed="true" Color="Color.Primary" Elevation="1" Class="mobile-footer-barr">
+        <MudIconButton Icon="@Icons.Material.Filled.KeyboardReturn" Style="background-color: #114e46;color: white" Edge="Edge.Start"
+                   OnClick="@(()=>_navigationManager.NavigateTo("/"))" />
+
+    </MudAppBar>
+}
+@code {
+    [Inject] private IBonDeRetourClient _bonDeRetourClient { get; set; }
+    [Inject] private IClient _client { get; set; }
+    [Parameter]
+    public AddBonDeRetourDto ModelbonDeRetour { get; set; } = new();
+    bool success;
+
+    private async Task SaveAsync()
+    {
+        string updateContent = Localizer["Voulez-vous Ajouter ?"];
+        var parameters = new DialogParameters
+        {
+          { nameof(Shared.Dialogs.ConfirmationDialog.ContentText), string.Format(updateContent) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.ConfirmationDialog>(Localizer["Aoujer"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            var response = await _bonDeRetourClient.AddAsync(ModelbonDeRetour);
+            if (response.Succeeded)
+            {
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                _navigationManager.NavigateTo($"/listbonderetour");
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
+            }
+        }
+    }
+
+    private List<GetArticleDto> artiche = new List<GetArticleDto>();
+    private bool resetValueOnEmptyText;
+    private bool coerceText;
+    private bool coerceValue;
+    private string value1, value2;
+
+}
