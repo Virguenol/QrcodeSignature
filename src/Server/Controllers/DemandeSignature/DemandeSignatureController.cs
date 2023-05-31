@@ -46,6 +46,22 @@ namespace Grs.BioRestock.Server.Controllers.DemandeSignature
         {
             return await _demandeSigature.GetByIdDemandeSingature(id);
         }
+        [HttpPost($"{nameof(SignedDocument)}/{{id}}")]
+        public async Task<IActionResult> SignedDocument(int id)
+        {
+            var document = await _demandeSigature.GetByIdDemandeSingature(id);
+            if(document == null)
+                return NotFound();
+
+            var result = await _demandeSigature.SignerDemande(document.Data).ConfigureAwait(false);
+
+            return Ok();
+        }
+        [HttpPost($"{nameof(AnnuleAsync)}/{{id}}")]
+        public async Task<Result<string>> AnnuleAsync(int id)
+        {
+            return await _demandeSigature.AnnuleDemande(id);
+        }
         #endregion
     }
 }

@@ -1,8 +1,10 @@
 ﻿@page "/demandesignature/ajouter"
 @using Grs.BioRestock.Transfer.DataModels.Demandesignature;
 @using System.IO;
+@using System.Net;
 @using Microsoft.Extensions.Configuration;
 @inject IConfiguration config
+
 
 
 <h3>AddEditDemande</h3>
@@ -10,7 +12,7 @@
 
     <div>
         <label for="fileName">File:</label>
-        <InputFile OnChange="@LoadFiles" class="form-control" accept=".png,.jpg,.jpeg" />
+        <InputFile OnChange="@LoadFiles" class="form-control" accept=".pdf" />
     </div>
     <button class="btn btn-primary mt-3" type="submit">Create Customer</button>
 </EditForm>
@@ -30,9 +32,8 @@
     private async Task SubmitForm()
     {
         try
-        {
-            string relativePath = await CaptureFile();
-            ModelDemande.FileUrl = relativePath;
+        { 
+            await CaptureFile();
             var response = await _demandeSignature.AddEditAsync(ModelDemande);
             if (response.Succeeded)
             {
@@ -46,7 +47,6 @@
                     _snackBar.Add(message, Severity.Error);
                 }
             }
-
         }
         catch (Exception ex)
         {
@@ -59,27 +59,12 @@
         file = e.File;
     }
 
-    private async Task<string> CaptureFile()
+    private async Task CaptureFile()
     {
-        if (file is null)
-        {
-            return "";
-        }
-
         try
         {
-            string newFileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(file.Name));
-
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\Document", "Archange", newFileName);
-
-            string relativePath = Path.Combine("Archange", newFileName);
-
-            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\Document", "Archange"));
-
-            await using FileStream fs = new(path, FileMode.Create);
-            await file.OpenReadStream(MAX_FILE_SIZE).CopyToAsync(fs);
-
-            return relativePath;
+            ModelDemande.FileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(file.Name));
+            ModelDemande.FileData = await file.GetAllBytes();
         }
         catch (Exception ex)
         {

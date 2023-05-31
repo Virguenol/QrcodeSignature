@@ -1,0 +1,72 @@
+﻿@using Grs.BioRestock.Transfer.DataModels.Demandesignature;
+@inject ISnackbar Snackbar
+
+<MudButton Variant="Variant.Filled" Href="/demandesignature/ajouter" Color="Color.Primary">Primary</MudButton>
+<MudTable Filter="new Func<DemandeSingatureDto,bool>(Search)">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Documents</MudText>
+        <MudSpacer />
+@*        <MudTextField @bind-Value="Search(0)" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+*@    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Id</MudTh>
+        <MudTh>Designation</MudTh>
+        <MudTh>Nom Client</MudTh>
+        <MudTh>Date</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Sign">@context.Designation</MudTd>
+        <MudTd DataLabel="Name">@context.NomClient</MudTd>
+        <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    public DemandeSingatureDto ModelDemande { get; set; } = new();
+    private FluentValidationValidator _fluentValidationValidator;
+
+    private bool Validated => _fluentValidationValidator.Validate(options => { options.IncludeAllRuleSets(); });
+
+
+    private IBrowserFile _file;
+
+    private bool FilterFunc1 = true;
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task UploadFiles(InputFileChangeEventArgs e)
+    {
+
+    }
+
+    private async Task SaveAsync()
+    {
+
+    }
+
+    private bool Search(DemandeSingatureDto brand)
+    {
+        //if (string.IsNullOrWhiteSpace(_searchString)) return true;
+        //if (brand.Name?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+        //{
+        //    return true;
+        //}
+        //if (brand.Description?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+        //{
+            return true;
+        //}
+        //return false;
+    }
+
+}
+
+
+
+

@@ -1,4 +1,4 @@
-﻿@page "/demandesignature/liste"
+﻿@page "/demandesignature/client"
 @using Grs.BioRestock.Transfer.DataModels.Demandesignature;
 
 
@@ -12,19 +12,20 @@ else
     <div>
         <h3>ListeDemandeSignature</h3>
         <br />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => AddDemande())">Primary</MudButton>
     </div>
     <MudTable Items="@allDemandes">
         <ToolBarContent>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => AddDemande())">Ajouter</MudButton>
             <MudSpacer />
-                <MudTextField @bind-Value="_searchString" Immediate="true" Placeholder="@Localizer["Rechercher des Bons..."]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" Style="width:100%; align-items:center;"></MudTextField>          
+            @*            <MudTextField @bind-Value="" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        *@
         </ToolBarContent>
         <HeaderContent>
             <MudTh>Id</MudTh>
             <MudTh>Designation</MudTh>
             <MudTh>Nom client</MudTh>
             <MudTh>Data Etablissemet</MudTh>
-            <MudTh Style="text-align: center">
+            <MudTh>
                 Action
             </MudTh>
         </HeaderContent>
@@ -33,9 +34,9 @@ else
             <MudTd DataLabel="Sign">@context.Designation</MudTd>
             <MudTd DataLabel="Name">@context.NomClient</MudTd>
             <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
-            <MudTd Style="text-align: right">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error">Annuler</MudButton>
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary">Signer</MudButton>
+            <MudTd>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"></MudButton>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary"></MudButton>
             </MudTd>
         </RowTemplate>
         <PagerContent>
@@ -44,11 +45,11 @@ else
     </MudTable>
 }
 
-@code{
+@code {
 
     [Inject] private IDemandeSignatureClient _demandeSignature { get; set; }
 
-    private List<DemandeSingatureDto> allDemandes = new ();
+    private List<DemandeSingatureDto> allDemandes = new();
     private DemandeSingatureDto Demande = new();
     public DemandeSingatureDto ModelDemande { get; set; } = new();
     private string _searchString = "";
@@ -75,7 +76,7 @@ else
                 _loaded = true;
             }
         }
-        catch(Exception)
+        catch (Exception)
         {
             throw;
         }
@@ -85,19 +86,5 @@ else
     {
         _navigationManager.NavigateTo($"/demandesignature/ajouter");
     }
-
-    private bool Search(DemandeSingatureDto demande)
-    {
-        if (string.IsNullOrWhiteSpace(_searchString)) return true;
-        if (demande.Designation?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
-        {
-            return true;
-        }
-        if (demande.NomClient?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
-        {
-            return true;
-        }
-        return false;
-    }
-   
 }
+

@@ -12,6 +12,7 @@ namespace Grs.BioRestock.Domain.Entities
     {
         public string Designation { get; set; }
         public string NomClient { get; set; }
+        public string CodeSignature { get; set; }
         public string FileUrl { get; set; }
         public string FileUrlsSigne { get; set; }
         public DateTime DateSignature { get; set; }

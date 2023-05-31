@@ -62,7 +62,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="wwwroot\Document\" />
+	  <Folder Include="wwwroot\Document\Archange\" />
 	</ItemGroup>
 
 </Project>

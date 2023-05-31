@@ -71,6 +71,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0">
       <TreatAsUsed>true</TreatAsUsed>
     </PackageReference>
+	  <PackageReference Include="GroupDocs.Signature" Version="23.4.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
