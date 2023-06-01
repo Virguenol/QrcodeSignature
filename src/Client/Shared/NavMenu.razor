@@ -14,10 +14,9 @@
  
 			<MudListSubheader Class="py-1 px-2 my-1">@Localizer["Animation"]</MudListSubheader>
 
-	<MudNavLink Style="border-left:6px solid #b955c7" Href="/Session">
+	@*<MudNavLink Style="border-left:6px solid #b955c7" Href="/Session">
 			@Localizer["Animations"]
-
-		</MudNavLink>
+	</MudNavLink>*@
 		
 	 
 	<MudListSubheader Class="py-1 px-2 my-1">@Localizer["Personal"]</MudListSubheader>
@@ -25,8 +24,8 @@
 		@Localizer["Mon compte"]
 	</MudNavLink>
 	<MudListSubheader Class="py-1 px-2 my-1">@Localizer["Gestion bon de retour"]</MudListSubheader>
-	<MudNavLink Href="/BonDeRetour/user_bonderetour" Icon="@Icons.Material.Outlined.SupervisorAccount">
-		@Localizer["Bon de retour"]
+	<MudNavLink Href="/demandesignature/client" Icon="@Icons.Material.Outlined.SupervisorAccount">
+		@Localizer["Demande Client"]
 	</MudNavLink>
 
 	@if (_canViewUsers || _canViewRoles)

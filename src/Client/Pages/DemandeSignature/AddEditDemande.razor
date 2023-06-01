@@ -10,11 +10,31 @@
 <h3>AddEditDemande</h3>
 <EditForm Model="ModelDemande" OnValidSubmit="SubmitForm">
 
-    <div>
+  @*  <div>
         <label for="fileName">File:</label>
-        <InputFile OnChange="@LoadFiles" class="form-control" accept=".pdf" />
-    </div>
-    <button class="btn btn-primary mt-3" type="submit">Create Customer</button>
+        <InputFile OnChange="@Uplo" class="form-control" accept=".pdf" />
+    </div>*@
+    <MudTextField @bind-Value="ModelDemande.Designation" Label="Designation" Variant="Variant.Outlined"></MudTextField>
+    <MudTextField @bind-Value="ModelDemande.NomClient" Label="Nom Client" Variant="Variant.Outlined"></MudTextField>
+
+    <MudItem>
+        @if (_file != null)
+        {
+            <MudAlert>@_file.Name</MudAlert>
+        }
+               <InputFile id="fileInput" hidden OnChange="UploadFiles" />
+        <div>
+              <MudButton HtmlTag="label"
+                           Variant="Variant.Text"
+                           Color="Color.Primary"
+                           Size="Size.Small"
+                           StartIcon="@Icons.Filled.CloudUpload"
+                           for="fileInput">
+                    Upload
+                </MudButton>
+        </div>
+    </MudItem>
+    <button class="btn btn-primary mt-3" type="submit">Créer Demande</button>
 </EditForm>
 
 
@@ -27,7 +47,7 @@
     private List<DemandeSingatureDto> allDemandes = new();
     public DemandeSingatureDto ModelDemande { get; set; } = new();
 
-    private IBrowserFile file;
+    private IBrowserFile _file;
 
     private async Task SubmitForm()
     {
@@ -54,21 +74,31 @@
         }
     }
 
-    private void LoadFiles(InputFileChangeEventArgs e)
+    private async Task UploadFiles(InputFileChangeEventArgs e)
     {
-        file = e.File;
+        _file = e.File;
+        if (_file != null)
+        {
+            var buffer = new byte[_file.Size];
+            var extension = Path.GetExtension(_file.Name);
+            var format = "application/octet-stream";
+            await _file.OpenReadStream(_file.Size).ReadAsync(buffer);
+            ModelDemande.FileUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+            ModelDemande.UploadRequest = new UploadRequest { Data = buffer, UploadType = UploadType.Document, Extension = extension };
+        }
     }
+
 
     private async Task CaptureFile()
     {
         try
         {
-            ModelDemande.FileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(file.Name));
-            ModelDemande.FileData = await file.GetAllBytes();
+            ModelDemande.FileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(_file.Name));
+            ModelDemande.FileData = await _file.GetAllBytes();
         }
         catch (Exception ex)
         {
-            errors.Add($"File: {file.Name} Error: {ex.Message}");
+            errors.Add($"File: {_file.Name} Error: {ex.Message}");
             throw;
         }
     }

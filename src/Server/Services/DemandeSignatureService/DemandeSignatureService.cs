@@ -13,10 +13,11 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using GroupDocs.Signature;
-using GroupDocs.Signature.Domain;
-using GroupDocs.Signature.Options;
 using System;
 using Grs.BioRestock.Shared.Enums.DemandeSignature;
+using Grs.BioRestock.Transfer.Requests;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using Grs.BioRestock.Application.Interfaces.Services;
 
 namespace Grs.BioRestock.Server.Services.DemandeSignatureService
 {
@@ -34,6 +35,8 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
         private readonly UniContext  _context;
         private readonly IWebHostEnvironment _env;
         private readonly IConfiguration _configuration;
+        private readonly IUploadService _uploadService;
+
 
         /// <summary>
         /// The ctor
@@ -41,38 +44,54 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
         /// <param name="context"></param>
         /// <param name="env"></param>
         /// <param name="configuration"></param>
-        public DemandeSignatureService(UniContext context, IWebHostEnvironment env,
+        public DemandeSignatureService(UniContext context, IUploadService uploadService, IWebHostEnvironment env,
             IConfiguration configuration)
         {
             _context = context;
             _env = env;
             _configuration = configuration;
+            _uploadService = uploadService;
+
         }
 
         public async Task<Result<string>> AddDemandeSignature(DemandeSingatureDto demandeSignature)
         {
-            var folderName = "files";
-            var fileStorage = _configuration.GetValue<string>("FileStorage");
-            demandeSignature.FileUrl = Path.Combine(folderName, demandeSignature.FileName);
+            //var folderName = "files";
+            //var fileStorage = _configuration.GetValue<string>("FileStorage");
+            //demandeSignature.FileUrl = Path.Combine(folderName, demandeSignature.FileName);
 
-            var streamData = new MemoryStream(demandeSignature.FileData);
-            if (streamData.Length > 0)
+            //var streamData = new MemoryStream(demandeSignature.FileData);
+            //if (streamData.Length > 0)
+            //{
+            //    var pathToSave = Path.Combine(fileStorage, folderName);
+            //    bool exists = Directory.Exists(pathToSave);
+            //    if (!exists)
+            //        System.IO.Directory.CreateDirectory(pathToSave);
+            //    var fullPath = Path.Combine(pathToSave, demandeSignature.FileName);
+
+            //    using (var stream = new FileStream(fullPath, FileMode.Create))
+            //    {
+            //        streamData.CopyTo(stream);
+            //    }
+            //}
+            var uploadRequest = demandeSignature.UploadRequest;
+            if (uploadRequest != null)
             {
-                var pathToSave = Path.Combine(fileStorage, folderName);
-                bool exists = Directory.Exists(pathToSave);
-                if (!exists)
-                    System.IO.Directory.CreateDirectory(pathToSave);
-                var fullPath = Path.Combine(pathToSave, demandeSignature.FileName);
-
-                using (var stream = new FileStream(fullPath, FileMode.Create))
-                {
-                    streamData.CopyTo(stream);
-                }
+                demandeSignature.FileName = uploadRequest.FileName = $"D-{Guid.NewGuid()}{uploadRequest.Extension}";
             }
 
             if (demandeSignature.Id == 0)
             {
                 var demande = demandeSignature.Adapt<DemandeSignature>();
+                if(uploadRequest != null)
+                {
+                     demandeSignature.FileUrl = _uploadService.UploadAsync(uploadRequest);
+
+                }
+                demande.FileUrl = demandeSignature.FileUrl;
+                demande.FileName = demandeSignature?.FileName;
+                demande.CreatedOn = DateTime.Now;
+                demande.DateEtablissement = DateTime.Now;
                 await _context.DemandeSignatures.AddAsync(demande);
                 await _context.SaveChangesAsync();
                 return await Result<string>.SuccessAsync("Demade Ajouter");
@@ -94,8 +113,9 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
 
         public async Task<Result<string>> DeleteDemandeSignature(int id)
         {
+
             var demande = await _context.DemandeSignatures.SingleOrDefaultAsync(x=>x.Id == id);
-            if(demande != null)
+            if(demande != null && demande.demandeStatut != DemandeStatut.Signé)
             {
                  _context.DemandeSignatures.Remove(demande);
                 await _context.SaveChangesAsync();
@@ -123,14 +143,14 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
 
         public async Task<Result<string>> SignerDemande(DemandeSingatureDto demandeSignature)
         {
-            var folderName = "files";
+           var folderName = "files";
             var fileStorage = _configuration.GetValue<string>("FileStorage");
-            var rawDocument = Path.Combine(fileStorage, demandeSignature.FileUrl);
+            var rawDocument = Path.Combine(fileStorage, demandeSignature.FileName);
 
             var code_url = Guid.NewGuid().ToString();
             using (Signature signature = new(rawDocument))
             {
-                var signed = $"https://localhost:3601/api/DemandeSignature/viewSignedDocument/{code_url}";
+                var signed = $"C:/Users/hp/Desktop/Signature/DemandeSignature/src/Client/wwwroot/files/{code_url}";
 
                 QrCodeSignOptions options = new(signed)
                 {
@@ -154,7 +174,7 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
                 _context.DemandeSignatures.Update(demande);
                 await _context.SaveChangesAsync();
             }
-            return await Result<string>.SuccessAsync(code_url);
+            return await Result<string>.SuccessAsync("le documement a été signer");
         }
 
         public async Task<Result<string>> AnnuleDemande(int id)
@@ -164,12 +184,11 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
             {
                 return await Result<string>.SuccessAsync("la demande n'existe pas");
             }
-            demande.demandeStatut = DemandeStatut.Signé;
+            demande.demandeStatut = DemandeStatut.Annulé;
+            demande.DateAnnulation = DateTime.Now;
             _context.DemandeSignatures.Update(demande);
             await _context.SaveChangesAsync();
             return await Result<string>.SuccessAsync("Demande Annulé");
         }
-
-
     }
 }

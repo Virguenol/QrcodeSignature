@@ -217,7 +217,7 @@
             <param name="languageCode"></param>
             <returns>ProcessingStatusCode 200 OK</returns>
         </member>
-        <member name="M:Grs.BioRestock.Server.Services.DemandeSignatureService.DemandeSignatureService.#ctor(Grs.BioRestock.Infrastructure.Contexts.UniContext,Microsoft.AspNetCore.Hosting.IWebHostEnvironment,Microsoft.Extensions.Configuration.IConfiguration)">
+        <member name="M:Grs.BioRestock.Server.Services.DemandeSignatureService.DemandeSignatureService.#ctor(Grs.BioRestock.Infrastructure.Contexts.UniContext,Grs.BioRestock.Application.Interfaces.Services.IUploadService,Microsoft.AspNetCore.Hosting.IWebHostEnvironment,Microsoft.Extensions.Configuration.IConfiguration)">
             <summary>
             The ctor
             </summary>

@@ -24,6 +24,7 @@ else
             <MudTh>Designation</MudTh>
             <MudTh>Nom client</MudTh>
             <MudTh>Data Etablissemet</MudTh>
+            <MudTh>Statut</MudTh>
             <MudTh Style="text-align: center">
                 Action
             </MudTh>
@@ -33,9 +34,10 @@ else
             <MudTd DataLabel="Sign">@context.Designation</MudTd>
             <MudTd DataLabel="Name">@context.NomClient</MudTd>
             <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
+            <MudTd DataLabel="Position">@context.demandeStatut</MudTd>
             <MudTd Style="text-align: right">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error">Annuler</MudButton>
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary">Signer</MudButton>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>AnnulerDemande(@context.Id))">Annuler</MudButton>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary" OnClick="@(()=>SignerDemande(@context.Id))">Signer</MudButton>
             </MudTd>
         </RowTemplate>
         <PagerContent>
@@ -99,5 +101,37 @@ else
         }
         return false;
     }
-   
+
+    public async Task SignerDemande(int demandeSignatureId)
+    {
+        var response = await _demandeSignature.SignedDocumentAsync(demandeSignatureId);
+        if (response == null)
+        {
+            _snackBar.Add(response.Messages[0], Severity.Success);
+        }
+        else
+        {
+            foreach (var message in response.Messages)
+            {
+                _snackBar.Add(message, Severity.Error);
+            }
+        }
+    }
+
+    public async Task AnnulerDemande(int demandeSignatureId)
+    {
+        var response = await _demandeSignature.AnnuleAsync(demandeSignatureId);
+        if (response == null)
+        {
+            _snackBar.Add(response.Messages[0], Severity.Success);
+        }
+        else
+        {
+            foreach (var message in response.Messages)
+            {
+                _snackBar.Add(message, Severity.Error);
+            }
+        }
+    }
+
 }
