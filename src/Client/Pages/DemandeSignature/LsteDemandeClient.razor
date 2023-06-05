@@ -1,6 +1,7 @@
 ﻿@page "/demandesignature/client"
 @using Grs.BioRestock.Shared.Enums.DemandeSignature;
 @using Grs.BioRestock.Transfer.DataModels.Demandesignature;
+@using Microsoft.AspNetCore.SignalR.Client;
 
 
 
@@ -14,19 +15,19 @@ else
         <h3>ListeDemandeSignature</h3>
         <br />
     </div>
-    <MudTable Items="@allDemandes">
+    <MudTable Items="@allDemandes" Filter="new Func<DemandeSingatureDto, bool>(Search)" @bind-role="Demande" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loaded" LoadingProgressColor="Color.Info">
         <ToolBarContent>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => AddDemande())">Ajouter</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => InvokeModal(null))">Ajouter</MudButton>
             <MudSpacer />
             <MudTextField @bind-Value="_searchString" Immediate="true" Placeholder="@Localizer["Rechercher des demande..."]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" Style="width:100%; align-items:center;"></MudTextField>
         </ToolBarContent>
         <HeaderContent>
-            <MudTh>Id</MudTh>
-            <MudTh>Designation</MudTh>
-            <MudTh>Nom client</MudTh>
-            <MudTh>Data Etablissemet</MudTh>
-            <MudTh>Statut Demande</MudTh>
-            <MudTh>Fichier joint</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.Id)">Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.Designation)">Designation</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.NomClient)">Nom client</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.DateEtablissement)">Data Etablissemet</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.FileUrl)">Fichier</MudTableSortLabel></MudTh>
+             <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.FileUrlsSigne)">Fichier Signé</MudTableSortLabel></MudTh>
             <MudTh Style="text-align: center">
                 Action
             </MudTh>
@@ -36,21 +37,40 @@ else
             <MudTd DataLabel="Sign">@context.Designation</MudTd>
             <MudTd DataLabel="Name">@context.NomClient</MudTd>
             <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
-            <MudTd DataLabel="Position">@context.demandeStatut</MudTd>
             <MudTd DataLabel="FichierJoint">
                 <MudAlert Severity="Severity.Normal" Square="true" Dense="true">
-                    @context.FileName
+                    @*@context.FileName*@
                     <MudIconButton Color="Color.Success"
                                    Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Small"
                                    Link="@context.FileUrl" Target="_blank">
                     </MudIconButton>
                 </MudAlert>
             </MudTd>
+            @if (context.demandeStatut == DemandeStatut.Signé)
+            {
+                <MudTd DataLabel="FichierJoint">
+                    <MudAlert Severity="Severity.Normal" Square="true" Dense="true">
+                    @*@context.FileName*@
+                    <MudIconButton Color="Color.Success"
+                                   Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Small"
+                                   Link="@context.FileUrlsSigne" Target="_blank">
+                    </MudIconButton>
+                </MudAlert>
+                </MudTd>
+            }
+            else
+            {
+                <MudTd DataLabel="Position">@context.demandeStatut</MudTd>
+            }
             <MudTd Style="text-align: right">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary" OnClick="@(()=>AnnulerDemande(@context.Id))" Style="margin:0 3px;">Cancel</MudButton>
-                @if (context.demandeStatut != statutSigner)
+@*                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Cancel" Color="Color.Primary" OnClick="@(()=>AnnulerDemande(@context.Id))" Style="margin:0 3px;">Cancel</MudButton>
+*@                @if (context.demandeStatut != statutSigner)
                 {
-                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>SupprimerDemande(@context.Id))">Delete</MudButton>
+                    <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary" Direction="Direction.Left" OffsetX="true">
+                        <MudMenuItem OnClick="(() => InvokeModal(Convert.ToString(context.Id)))">@Localizer["Modifier"]</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>
+                        <MudMenuItem OnClick="@(()=>AnnulerDemande(@context.Id))">Annuler</MudMenuItem>
+                    </MudMenu>
                 }
             </MudTd>
         </RowTemplate>
@@ -64,9 +84,14 @@ else
 
     [Inject] private IDemandeSignatureClient _demandeSignature { get; set; }
 
+    //[CascadingParameter] private MudDialogInstance MudDialog { get; set; }
+    //[CascadingParameter] private HubConnection HubConnection { get; set; }
+
     private List<DemandeSingatureDto> allDemandes = new();
     private DemandeSingatureDto Demande = new();
-    public DemandeSingatureDto ModelDemande { get; set; } = new();
+
+    public DemandeSingatureDto AddEdtModale { get; set; } = new();
+
     private string _searchString = "";
 
     private DemandeStatut statutSigner = DemandeStatut.Signé;
@@ -99,10 +124,11 @@ else
         }
     }
 
-    private void AddDemande()
-    {
-        _navigationManager.NavigateTo($"/demandesignature/ajouter");
-    }
+
+    //private void AddDemande()
+    //{
+    //    _navigationManager.NavigateTo($"/demandesignature/ajouter");
+    //}
 
     private bool Search(DemandeSingatureDto demande)
     {
@@ -150,6 +176,40 @@ else
             }
         }
     }
+
+    private async Task InvokeModal(string id)
+    {
+        var parameters = new DialogParameters();
+        if (id != null)
+        {
+            Demande = allDemandes.FirstOrDefault(d => d.Id == Convert.ToInt32(id));
+            if (Demande != null)
+            {
+                parameters.Add(nameof(AddEdtModal.ModelDemande), new DemandeSingatureDto
+                {
+                    Id = Demande.Id,
+                    Designation = Demande.Designation,
+                    NomClient = Demande.NomClient,
+                    FileUrl = Demande.FileName,
+                });
+            }
+        }
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<AddEdtModal>(id == null ? Localizer["Create"] : Localizer["Edit"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            OnSearch("");
+        }
+    }
+
+    private void OnSearch(string text)
+    {
+        _searchString = text;
+        //_table.ReloadServerData();
+    }
+
+
 
 }
 

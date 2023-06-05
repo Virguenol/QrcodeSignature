@@ -64,6 +64,12 @@ namespace Grs.BioRestock.Server.Controllers.DemandeSignature
         {
             return await _demandeSigature.AnnuleDemande(id);
         }
+
+        [HttpPost($"{nameof(VérifierSingature)}/{{code}}")]
+        public async Task<Result<DemandeSingatureDto>> VérifierSingature(string code)
+        {
+            return await _demandeSigature.VérifierSingature(code);
+        }
         #endregion
     }
 }

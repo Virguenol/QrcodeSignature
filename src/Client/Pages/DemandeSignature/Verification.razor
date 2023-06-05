@@ -1,0 +1,44 @@
+﻿@page "/DemandeSignature/verification/{Id}"
+@using Grs.BioRestock.Transfer.DataModels.Demandesignature;
+
+
+<MudPaper Class="pa-16 ma-2" Elevation="0">
+<h3>Verification</h3>
+
+@if(demande.CodeSignature == Id)
+{
+    <MudText Typo="Typo.h4">le dcument @Id est vérifier</MudText>
+}
+else
+{
+    <MudText Typo="Typo.h4">le dcument @Id n'est pas vérifier'</MudText>
+}
+</MudPaper>
+
+@code {
+
+    [Inject] 
+    private IDemandeSignatureClient _demandeSignatureClient { get; set; }
+
+    [Parameter]
+    public string Id { get; set; }
+
+    private List<DemandeSingatureDto> allDemande = new();
+
+    private DemandeSingatureDto demande { get; set; } = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var raw = await _demandeSignatureClient.VérifierSingatureAsync(Id);
+            if (raw.Succeeded)
+                demande = raw.Data;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+}

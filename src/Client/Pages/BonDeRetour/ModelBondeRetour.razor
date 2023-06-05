@@ -2,6 +2,7 @@
 @using Grs.BioRestock.Shared.Enums.BonDeRetour;
 @using Grs.BioRestock.Transfer.DataModels.BonDeRetourDtos;
 @using Microsoft.AspNetCore.SignalR.Client;
+
 <EditForm Model="@bonDeRetourModel" OnValidSubmit="SaveAsync">
     <FluentValidationValidator @ref="_fluentValidationValidator" />
     <MudDialog>

@@ -1,4 +1,5 @@
 ﻿@page "/demandesignature/liste"
+@using Grs.BioRestock.Shared.Enums.DemandeSignature;
 @using Grs.BioRestock.Transfer.DataModels.Demandesignature;
 
 
@@ -13,18 +14,17 @@ else
         <h3>ListeDemandeSignature</h3>
         <br />
     </div>
-    <MudTable Items="@allDemandes">
+    <MudTable Items="@allDemandes" Filter="new Func<DemandeSingatureDto, bool>(Search)" @bind-role="Demande" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loaded" LoadingProgressColor="Color.Info">
         <ToolBarContent>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => AddDemande())">Ajouter</MudButton>
             <MudSpacer />
                 <MudTextField @bind-Value="_searchString" Immediate="true" Placeholder="@Localizer["Rechercher des Bons..."]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" Style="width:100%; align-items:center;"></MudTextField>          
         </ToolBarContent>
         <HeaderContent>
-            <MudTh>Id</MudTh>
-            <MudTh>Designation</MudTh>
-            <MudTh>Nom client</MudTh>
-            <MudTh>Data Etablissemet</MudTh>
-            <MudTh>Statut</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.Id)">Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.Designation)">Designation</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.NomClient)">Nom client</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.DateEtablissement)">Data Etablissemet</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.demandeStatut)">Statut</MudTableSortLabel></MudTh>
             <MudTh Style="text-align: center">
                 Action
             </MudTh>
@@ -36,8 +36,16 @@ else
             <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
             <MudTd DataLabel="Position">@context.demandeStatut</MudTd>
             <MudTd Style="text-align: right">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>AnnulerDemande(@context.Id))">Annuler</MudButton>
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Update" Color="Color.Primary" OnClick="@(()=>SignerDemande(@context.Id))">Signer</MudButton>
+
+                <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary" Direction="Direction.Left" OffsetX="true">
+                    <MudMenuItem OnClick="@(()=>SignerDemande(@context.Id))">Signer</MudMenuItem>
+                    <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>
+                    @if (context.demandeStatut != statutSigner)
+                    {
+                        <MudMenuItem OnClick="@(()=>AnnulerDemande(@context.Id))">Annuler</MudMenuItem>
+                    }
+                </MudMenu>
+
             </MudTd>
         </RowTemplate>
         <PagerContent>
@@ -54,6 +62,8 @@ else
     private DemandeSingatureDto Demande = new();
     public DemandeSingatureDto ModelDemande { get; set; } = new();
     private string _searchString = "";
+
+    private DemandeStatut statutSigner = DemandeStatut.Signé;
 
     public bool _loaded;
     private void searchString()
@@ -83,10 +93,10 @@ else
         }
     }
 
-    private void AddDemande()
-    {
-        _navigationManager.NavigateTo($"/demandesignature/ajouter");
-    }
+    //private void AddDemande()
+    //{
+    //    _navigationManager.NavigateTo($"/demandesignature/ajouter");
+    //}
 
     private bool Search(DemandeSingatureDto demande)
     {
@@ -124,6 +134,23 @@ else
         if (response == null)
         {
             _snackBar.Add(response.Messages[0], Severity.Success);
+        }
+        else
+        {
+            foreach (var message in response.Messages)
+            {
+                _snackBar.Add(message, Severity.Error);
+            }
+        }
+    }
+
+    public async Task SupprimerDemande(int demandeSignatureId)
+    {
+        var response = await _demandeSignature.DeleteAsync(demandeSignatureId);
+        if (response == null)
+        {
+            _snackBar.Add(response.Messages[0], Severity.Success);
+            await GetDemande();
         }
         else
         {

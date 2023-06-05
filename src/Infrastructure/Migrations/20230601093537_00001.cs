@@ -64,6 +64,8 @@ namespace Grs.BioRestock.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Designation = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     NomClient = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CodeSignature = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FileUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FileUrlsSigne = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DateSignature = table.Column<DateTime>(type: "datetime2", nullable: false),

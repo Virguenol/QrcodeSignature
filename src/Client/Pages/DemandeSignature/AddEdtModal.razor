@@ -1,72 +1,184 @@
-﻿@using Grs.BioRestock.Transfer.DataModels.Demandesignature;
-@inject ISnackbar Snackbar
+﻿@using Grs.BioRestock.Shared.Constants.Application;
+@using Grs.BioRestock.Transfer.DataModels.Demandesignature;
+@using System.IO;
+@using Microsoft.AspNetCore.SignalR.Client;
 
-<MudButton Variant="Variant.Filled" Href="/demandesignature/ajouter" Color="Color.Primary">Primary</MudButton>
-<MudTable Filter="new Func<DemandeSingatureDto,bool>(Search)">
-    <ToolBarContent>
-        <MudText Typo="Typo.h6">Documents</MudText>
-        <MudSpacer />
-@*        <MudTextField @bind-Value="Search(0)" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-*@    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>Id</MudTh>
-        <MudTh>Designation</MudTh>
-        <MudTh>Nom Client</MudTh>
-        <MudTh>Date</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Id">@context.Id</MudTd>
-        <MudTd DataLabel="Sign">@context.Designation</MudTd>
-        <MudTd DataLabel="Name">@context.NomClient</MudTd>
-        <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager />
-    </PagerContent>
-</MudTable>
-@code {
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
-    public DemandeSingatureDto ModelDemande { get; set; } = new();
+<EditForm Model="@ModelDemande" OnValidSubmit="SubmitForm">
+    <FluentValidationValidator @ref="_fluentValidationValidator" />
+    <MudDialog>
+        <TitleContent>
+            @{
+                if (ModelDemande.Id == 0)
+                {
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1" />
+                        Add Document
+                    </MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.Update" Class="mr-3 mb-n1" />
+                        Update Document
+                    </MudText>
+                }
+            }
+        </TitleContent>
+        <DialogContent>
+            <MudGrid>
+                @if (ModelDemande.Id == 0)
+                {
+                    <MudItem xs="12" md="6">
+                        <MudTextField Disabled For="@(() => ModelDemande.Id)" @bind-Value="ModelDemande.Id" Label="Id" />
+                    </MudItem>
+                }
+                <MudItem xs="12" md="6">
+                    <MudTextField For="@(() => ModelDemande.Designation)" @bind-Value="ModelDemande.Designation" Label="Designation" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField For="@(() => ModelDemande.NomClient)" @bind-Value="ModelDemande.NomClient" Label="Nom client" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudItem>
+                        @if (_file != null)
+                        {
+                            <MudAlert>@_file.Name</MudAlert>
+                            <InputFile id="fileInput" hidden OnChange="UploadFiles" />
+
+                        }
+                        @if (ModelDemande.Id != 0 && !string.IsNullOrEmpty(ModelDemande.FileUrl))
+                        {
+                            <MudAlert>@(ModelDemande.FileUrl)</MudAlert>
+                        }
+                        <InputFile id="fileInput" hidden OnChange="UploadFiles" />
+                        <div>
+                            @if (ModelDemande.Id == 0)
+                            {
+                                <MudButton HtmlTag="label"
+                                           Variant="Variant.Text"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           StartIcon="@Icons.Filled.CloudUpload"
+                                           for="fileInput">
+                                    Upload
+                                </MudButton>
+                            }
+                            else if (!string.IsNullOrEmpty(ModelDemande.FileUrl))
+                            {
+                                <MudButton HtmlTag="label"
+                                           Variant="Variant.Text"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           StartIcon="@Icons.Filled.CloudUpload"
+                                           for="fileInput">
+                                    Upload
+                                </MudButton>
+                            }
+                        </div> 
+                    </MudItem>
+                </MudItem>
+            </MudGrid>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+            @if (ModelDemande.Id != 0)
+            {
+                <MudButton Variant="Variant.Filled" ButtonType="ButtonType.Submit" Color="Color.Success">Update</MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" ButtonType="ButtonType.Submit"  Color="Color.Success">Save</MudButton>
+            }
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code{
+    
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] private HubConnection HubConnection { get; set; }
+
+
+    private const long MAX_FILE_SIZE = 1024*1024*10;
+    private List<string> errors = new();
+
+    [Inject] private IDemandeSignatureClient _demandeSignature { get; set; }
+
+    private List<DemandeSingatureDto> allDemandes = new();
+    [Parameter]public DemandeSingatureDto ModelDemande { get; set; } = new();
+
     private FluentValidationValidator _fluentValidationValidator;
-
     private bool Validated => _fluentValidationValidator.Validate(options => { options.IncludeAllRuleSets(); });
 
+    protected override async Task OnInitializedAsync()
+    {
+        HubConnection = HubConnection.TryInitialize(_navigationManager);
+        if (HubConnection.State == HubConnectionState.Disconnected)
+        {
+            await HubConnection.StartAsync();
+        }
+    }
 
     private IBrowserFile _file;
 
-    private bool FilterFunc1 = true;
-
-    private void Cancel()
+     private async Task SubmitForm()
     {
-        MudDialog.Cancel();
+        try
+        { 
+            await CaptureFile();
+            var response = await _demandeSignature.AddEditAsync(ModelDemande);
+            if (response.Succeeded)
+            {
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                await HubConnection.SendAsync(ApplicationConstants.SignalR.SendUpdateDashboard);
+                MudDialog.Close();
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Error: {ex.Message}");
+        }
+        await HubConnection.SendAsync(ApplicationConstants.SignalR.SendUpdateDashboard);
     }
 
     private async Task UploadFiles(InputFileChangeEventArgs e)
     {
-
+        _file = e.File;
+        if (_file != null)
+        {
+            var buffer = new byte[_file.Size];
+            var extension = Path.GetExtension(_file.Name);
+            var format = "application/octet-stream";
+            await _file.OpenReadStream(_file.Size).ReadAsync(buffer);
+            ModelDemande.FileUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+            ModelDemande.UploadRequest = new UploadRequest { Data = buffer, UploadType = UploadType.Document, Extension = extension };
+        }
     }
 
-    private async Task SaveAsync()
-    {
 
+    private async Task CaptureFile()
+    {
+        try
+        {
+            ModelDemande.FileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(_file.Name));
+            ModelDemande.FileData = await _file.GetAllBytes();
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"File: {_file.Name} Error: {ex.Message}");
+            throw;
+        }
     }
-
-    private bool Search(DemandeSingatureDto brand)
+    public void Cancel()
     {
-        //if (string.IsNullOrWhiteSpace(_searchString)) return true;
-        //if (brand.Name?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
-        //{
-        //    return true;
-        //}
-        //if (brand.Description?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
-        //{
-            return true;
-        //}
-        //return false;
+        MudDialog.Cancel();
     }
 
 }
-
-
-
-

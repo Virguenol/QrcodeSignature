@@ -29,6 +29,7 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
         Task<Result<string>> DeleteDemandeSignature(int id);
         Task<Result<string>> AnnuleDemande(int id);
         Task<Result<string>> SignerDemande(DemandeSingatureDto demandeSignature);
+        Task<Result<DemandeSingatureDto>> VérifierSingature(string code);
     }
     public class DemandeSignatureService : IDemandeSignatureService
     {
@@ -86,7 +87,6 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
                 if(uploadRequest != null)
                 {
                      demandeSignature.FileUrl = _uploadService.UploadAsync(uploadRequest);
-
                 }
                 demande.FileUrl = demandeSignature.FileUrl;
                 demande.FileName = demandeSignature?.FileName;
@@ -143,14 +143,14 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
 
         public async Task<Result<string>> SignerDemande(DemandeSingatureDto demandeSignature)
         {
-           var folderName = "files";
-            var fileStorage = _configuration.GetValue<string>("FileStorage");
+            var folderName = "Files\\Documents\\";
+            var fileStorage = "Files\\Documents\\";
             var rawDocument = Path.Combine(fileStorage, demandeSignature.FileName);
 
-            var code_url = Guid.NewGuid().ToString();
+            var code_url = Guid.NewGuid().ToString("N");
             using (Signature signature = new(rawDocument))
             {
-                var signed = $"C:/Users/hp/Desktop/Signature/DemandeSignature/src/Client/wwwroot/files/{code_url}";
+                var signed = $"https://localhost:3601/DemandeSignature/verification/{code_url}";
 
                 QrCodeSignOptions options = new(signed)
                 {
@@ -160,21 +160,21 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
                     Width = 35,
                     Height = 35,
                     LocationMeasureType = MeasureType.Percents,
-                    ReturnContentType = FileType.TXT
-                    
+                    ReturnContentType = FileType.TXT                   
                 };
-                var signedFileUrl = Path.Combine(folderName, $"{code_url}.pdf");
-                signature.Sign(Path.Combine(fileStorage, signedFileUrl), options);
+                var signedFileUrl =  Path.Combine(folderName, $"{code_url}.pdf");
+                signature.Sign(signedFileUrl, options);
 
                 var demande = await _context.DemandeSignatures.SingleOrDefaultAsync(x => x.Id == demandeSignature.Id);
                 demande.FileUrlsSigne = signedFileUrl;
+                demande.CodeSignature = code_url;
                 demande.DateSignature = DateTime.Now;
                 demande.demandeStatut = DemandeStatut.Signé;
                 demande.CodeSignature = code_url;
                 _context.DemandeSignatures.Update(demande);
                 await _context.SaveChangesAsync();
             }
-            return await Result<string>.SuccessAsync("le documement a été signer");
+            return await Result<string>.SuccessAsync(code_url);
         }
 
         public async Task<Result<string>> AnnuleDemande(int id)
@@ -189,6 +189,13 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
             _context.DemandeSignatures.Update(demande);
             await _context.SaveChangesAsync();
             return await Result<string>.SuccessAsync("Demande Annulé");
+        }
+
+        public async Task<Result<DemandeSingatureDto>> VérifierSingature(string code)
+        {
+            var demande = await _context.DemandeSignatures.SingleOrDefaultAsync(x => x.CodeSignature == code);
+            var reponse = demande.Adapt<DemandeSingatureDto>();
+            return await Result<DemandeSingatureDto>.SuccessAsync(reponse);
         }
     }
 }
