@@ -36,7 +36,7 @@ else
             <MudTd DataLabel="Nr">@context.Id</MudTd>
             <MudTd DataLabel="Sign">@context.Designation</MudTd>
             <MudTd DataLabel="Name">@context.NomClient</MudTd>
-            <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
+            <MudTd DataLabel="Position">@context.DateEtablissement.ToString("dd/MM/yyyy")</MudTd>
             <MudTd DataLabel="FichierJoint">
                 <MudAlert Severity="Severity.Normal" Square="true" Dense="true">
                     @*@context.FileName*@
@@ -67,9 +67,18 @@ else
 *@                @if (context.demandeStatut != statutSigner)
                 {
                     <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary" Direction="Direction.Left" OffsetX="true">
+                        @if (context.demandeStatut != statutAnnuler)
+                        {
                         <MudMenuItem OnClick="(() => InvokeModal(Convert.ToString(context.Id)))">@Localizer["Modifier"]</MudMenuItem>
-                        <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>
-                        <MudMenuItem OnClick="@(()=>AnnulerDemande(@context.Id))">Annuler</MudMenuItem>
+                        }
+                        @if (context.demandeStatut == statutAnnuler || context.demandeStatut == statutNouveau)
+                        {
+                            <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>
+                        }
+                        @if (context.demandeStatut != statutAnnuler)
+                        {
+                            <MudMenuItem OnClick="@(()=>AnnulerDemande(@context.Id))">Annuler</MudMenuItem>
+                        }
                     </MudMenu>
                 }
             </MudTd>
@@ -84,9 +93,6 @@ else
 
     [Inject] private IDemandeSignatureClient _demandeSignature { get; set; }
 
-    //[CascadingParameter] private MudDialogInstance MudDialog { get; set; }
-    //[CascadingParameter] private HubConnection HubConnection { get; set; }
-
     private List<DemandeSingatureDto> allDemandes = new();
     private DemandeSingatureDto Demande = new();
 
@@ -95,6 +101,8 @@ else
     private string _searchString = "";
 
     private DemandeStatut statutSigner = DemandeStatut.Signé;
+    private DemandeStatut statutAnnuler = DemandeStatut.Annulé;
+    private DemandeStatut statutNouveau = DemandeStatut.Nouveau;
 
     public bool _loaded;
     private void searchString()
@@ -123,12 +131,6 @@ else
             throw;
         }
     }
-
-
-    //private void AddDemande()
-    //{
-    //    _navigationManager.NavigateTo($"/demandesignature/ajouter");
-    //}
 
     private bool Search(DemandeSingatureDto demande)
     {

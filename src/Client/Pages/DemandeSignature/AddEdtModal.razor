@@ -26,12 +26,11 @@
         </TitleContent>
         <DialogContent>
             <MudGrid>
-                @if (ModelDemande.Id == 0)
-                {
-                    <MudItem xs="12" md="6">
-                        <MudTextField Disabled For="@(() => ModelDemande.Id)" @bind-Value="ModelDemande.Id" Label="Id" />
-                    </MudItem>
-                }
+               
+                <MudItem xs="12" md="6">
+                    <MudTextField Disabled For="@(() => ModelDemande.Id)" @bind-Value="ModelDemande.Id" Label="Id" />
+                 </MudItem>
+
                 <MudItem xs="12" md="6">
                     <MudTextField For="@(() => ModelDemande.Designation)" @bind-Value="ModelDemande.Designation" Label="Designation" />
                 </MudItem>
@@ -40,16 +39,16 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudItem>
+                        
                         @if (_file != null)
                         {
                             <MudAlert>@_file.Name</MudAlert>
                             <InputFile id="fileInput" hidden OnChange="UploadFiles" />
-
                         }
                         @if (ModelDemande.Id != 0 && !string.IsNullOrEmpty(ModelDemande.FileUrl))
                         {
-                            <MudAlert>@(ModelDemande.FileUrl)</MudAlert>
-                        }
+@*                            <MudAlert>@(ModelDemande.FileUrl)</MudAlert>
+*@                      }
                         <InputFile id="fileInput" hidden OnChange="UploadFiles" />
                         <div>
                             @if (ModelDemande.Id == 0)

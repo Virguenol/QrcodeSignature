@@ -103,9 +103,15 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
                 {
                     return await Result<string>.SuccessAsync("la demande n'existe pas");
                 }
+                if (uploadRequest != null)
+                {
+                    demandeSignature.FileUrl = _uploadService.UploadAsync(uploadRequest);
+                }
                 demande.Designation = demandeSignature.Designation;
                 demande.NomClient = demandeSignature.NomClient;
-                    _context.DemandeSignatures.Update(demande);
+                demande.FileUrl = demandeSignature.FileUrl;
+                demande.FileName = demandeSignature?.FileName;             
+                _context.DemandeSignatures.Update(demande);
                 await _context.SaveChangesAsync();
                 return await Result<string>.SuccessAsync("la demande a été modifier");
             }
@@ -113,7 +119,6 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
 
         public async Task<Result<string>> DeleteDemandeSignature(int id)
         {
-
             var demande = await _context.DemandeSignatures.SingleOrDefaultAsync(x=>x.Id == id);
             if(demande != null && demande.demandeStatut != DemandeStatut.Signé)
             {
@@ -174,7 +179,7 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
                 _context.DemandeSignatures.Update(demande);
                 await _context.SaveChangesAsync();
             }
-            return await Result<string>.SuccessAsync(code_url);
+            return await Result<string>.SuccessAsync("Fichier Signer");
         }
 
         public async Task<Result<string>> AnnuleDemande(int id)

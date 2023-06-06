@@ -33,19 +33,20 @@ else
             <MudTd DataLabel="Nr">@context.Id</MudTd>
             <MudTd DataLabel="Sign">@context.Designation</MudTd>
             <MudTd DataLabel="Name">@context.NomClient</MudTd>
-            <MudTd DataLabel="Position">@context.DateEtablissement</MudTd>
+            <MudTd DataLabel="Position">@context.DateEtablissement.ToString("dd/MM/yyyy")</MudTd>
             <MudTd DataLabel="Position">@context.demandeStatut</MudTd>
             <MudTd Style="text-align: right">
-
                 <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary" Direction="Direction.Left" OffsetX="true">
-                    <MudMenuItem OnClick="@(()=>SignerDemande(@context.Id))">Signer</MudMenuItem>
-                    <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>
-                    @if (context.demandeStatut != statutSigner)
+                    @if (context.demandeStatut != statutAnnuler || context.demandeStatut != statutSigner)
+                    {
+                        <MudMenuItem OnClick="@(()=>SignerDemande(@context.Id))">Signer</MudMenuItem>
+                    }
+                    <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>                  
+                    @if (context.demandeStatut != statutSigner || context.demandeStatut != statutSigner)
                     {
                         <MudMenuItem OnClick="@(()=>AnnulerDemande(@context.Id))">Annuler</MudMenuItem>
                     }
                 </MudMenu>
-
             </MudTd>
         </RowTemplate>
         <PagerContent>
@@ -64,6 +65,8 @@ else
     private string _searchString = "";
 
     private DemandeStatut statutSigner = DemandeStatut.Signé;
+    private DemandeStatut statutAnnuler = DemandeStatut.Annulé;
+    private DemandeStatut statutNouveau = DemandeStatut.Nouveau;
 
     public bool _loaded;
     private void searchString()
