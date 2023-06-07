@@ -54,27 +54,9 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
             _uploadService = uploadService;
 
         }
-
         public async Task<Result<string>> AddDemandeSignature(DemandeSingatureDto demandeSignature)
         {
-            //var folderName = "files";
-            //var fileStorage = _configuration.GetValue<string>("FileStorage");
-            //demandeSignature.FileUrl = Path.Combine(folderName, demandeSignature.FileName);
-
-            //var streamData = new MemoryStream(demandeSignature.FileData);
-            //if (streamData.Length > 0)
-            //{
-            //    var pathToSave = Path.Combine(fileStorage, folderName);
-            //    bool exists = Directory.Exists(pathToSave);
-            //    if (!exists)
-            //        System.IO.Directory.CreateDirectory(pathToSave);
-            //    var fullPath = Path.Combine(pathToSave, demandeSignature.FileName);
-
-            //    using (var stream = new FileStream(fullPath, FileMode.Create))
-            //    {
-            //        streamData.CopyTo(stream);
-            //    }
-            //}
+            
             var uploadRequest = demandeSignature.UploadRequest;
             if (uploadRequest != null)
             {
@@ -150,7 +132,7 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
 
         public async Task<Result<string>> SignerDemande(DemandeSingatureDto demandeSignature)
         {
-            var folderName = "Files\\Documents\\";
+            //var folderName = "Files\\Documents\\";
             var fileStorage = "Files\\Documents\\";
             var rawDocument = Path.Combine(fileStorage, demandeSignature.FileName);
 
@@ -169,7 +151,7 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
                     LocationMeasureType = MeasureType.Percents,
                     ReturnContentType = FileType.TXT                   
                 };
-                var signedFileUrl =  Path.Combine(folderName, $"{code_url}.pdf");
+                var signedFileUrl =  Path.Combine(fileStorage, $"{code_url}.pdf");
                 signature.Sign(signedFileUrl, options);
 
                 var demande = await _context.DemandeSignatures.SingleOrDefaultAsync(x => x.Id == demandeSignature.Id);
