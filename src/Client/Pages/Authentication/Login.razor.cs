@@ -23,11 +23,11 @@ namespace Grs.BioRestock.Client.Pages.Authentication
         protected override async Task OnInitializedAsync()
         {
             CurrentLanguageCode = await _clientPreferenceManager.GetCurrentLanguageCodeAsync();
-            var state = await _stateProvider.GetAuthenticationStateAsync();
-            if (state != new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())))
-            {
-                _navigationManager.NavigateTo("/");
-            }
+            //var state = await _stateProvider.GetAuthenticationStateAsync();
+            //if (state != new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())))
+            //{
+            //    _navigationManager.NavigateTo("/");
+            //}
             //await AddScannerEventListener();
         }
 

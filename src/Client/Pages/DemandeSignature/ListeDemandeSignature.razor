@@ -14,7 +14,7 @@ else
         <h3>ListeDemandeSignature</h3>
         <br />
     </div>
-    <MudTable Items="@allDemandes" Filter="new Func<DemandeSingatureDto, bool>(Search)" @bind-role="Demande" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loaded" LoadingProgressColor="Color.Info">
+    <MudTable Items="@allDemandes.Where(c => c.demandeStatut != statutAnnuler)" Filter="new Func<DemandeSingatureDto, bool>(Search)" @bind-role="Demande" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loaded" LoadingProgressColor="Color.Info">
         <ToolBarContent>
             <MudSpacer />
                 <MudTextField @bind-Value="_searchString" Immediate="true" Placeholder="@Localizer["Rechercher des Bons..."]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-3" Style="width:100%; align-items:center;"></MudTextField>          
@@ -24,6 +24,7 @@ else
             <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.Designation)">Designation</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.NomClient)">Nom client</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.DateEtablissement)">Data Etablissemet</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.FileUrl)">Fichier</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<DemandeSingatureDto, object>(x => x.demandeStatut)">Statut</MudTableSortLabel></MudTh>
             <MudTh Style="text-align: center">
                 Action
@@ -34,6 +35,17 @@ else
             <MudTd DataLabel="Sign">@context.Designation</MudTd>
             <MudTd DataLabel="Name">@context.NomClient</MudTd>
             <MudTd DataLabel="Position">@context.DateEtablissement.ToString("dd/MM/yyyy")</MudTd>
+
+            <MudTd DataLabel="FichierJoint">
+                <MudAlert Severity="Severity.Normal" Square="true" Dense="true">
+                    @*@context.FileName*@
+                    <MudIconButton Color="Color.Success"
+                                   Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Small"
+                                   Link="@context.FileUrl" Target="_blank">
+                    </MudIconButton>
+                </MudAlert>
+            </MudTd>
+
             <MudTd DataLabel="Position">@context.demandeStatut</MudTd>
             <MudTd Style="text-align: right">
                 <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary" Direction="Direction.Left" OffsetX="true">
@@ -41,8 +53,8 @@ else
                     {
                         <MudMenuItem OnClick="@(()=>SignerDemande(@context.Id))">Signer</MudMenuItem>
                     }
-                    <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>                  
-                    @if (context.demandeStatut != statutSigner || context.demandeStatut != statutSigner)
+                    <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>
+                    @if (context.demandeStatut != statutSigner)
                     {
                         <MudMenuItem OnClick="@(()=>AnnulerDemande(@context.Id))">Annuler</MudMenuItem>
                     }
@@ -117,51 +129,86 @@ else
 
     public async Task SignerDemande(int demandeSignatureId)
     {
-        var response = await _demandeSignature.SignedDocumentAsync(demandeSignatureId);
-        if (response == null)
+        string updateContent = Localizer["Voulez-vous Signer?"];
+        var parameters = new DialogParameters
         {
-            _snackBar.Add(response.Messages[0], Severity.Success);
-        }
-        else
+          { nameof(Shared.Dialogs.ConfirmationDialog.ContentText), string.Format(updateContent) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.ConfirmationDialog>(Localizer["Aoujer"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
         {
-            foreach (var message in response.Messages)
+            var response = await _demandeSignature.SignedDocumentAsync(demandeSignatureId);
+            if (response == null)
             {
-                _snackBar.Add(message, Severity.Error);
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                await GetDemande();
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
             }
         }
     }
 
     public async Task AnnulerDemande(int demandeSignatureId)
     {
-        var response = await _demandeSignature.AnnuleAsync(demandeSignatureId);
-        if (response == null)
-        {
-            _snackBar.Add(response.Messages[0], Severity.Success);
-        }
-        else
-        {
-            foreach (var message in response.Messages)
+        string deleteContent = Localizer["voulez vous annuller"];
+        var parameters = new DialogParameters
             {
-                _snackBar.Add(message, Severity.Error);
+              { nameof(Shared.Dialogs.DeleteConfirmationDialog.ContentText), string.Format(deleteContent, demandeSignatureId) }
+            };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.DeleteConfirmationDialog>(Localizer["Delete"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            var response = await _demandeSignature.AnnuleAsync(demandeSignatureId);
+            if (response == null)
+            {
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                await GetDemande();
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
             }
         }
     }
 
     public async Task SupprimerDemande(int demandeSignatureId)
     {
-        var response = await _demandeSignature.DeleteAsync(demandeSignatureId);
-        if (response == null)
+
+        string deleteContent = Localizer["voulez vous Supprimer"];
+        var parameters = new DialogParameters
         {
-            _snackBar.Add(response.Messages[0], Severity.Success);
-            await GetDemande();
-        }
-        else
+          { nameof(Shared.Dialogs.DeleteConfirmationDialog.ContentText), string.Format(deleteContent, demandeSignatureId) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.DeleteConfirmationDialog>(Localizer["Delete"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
         {
-            foreach (var message in response.Messages)
+            var response = await _demandeSignature.DeleteAsync(demandeSignatureId);
+            if (response == null)
             {
-                _snackBar.Add(message, Severity.Error);
+                _snackBar.Add(response.Messages[0], Severity.Success);
+                await GetDemande();
+            }
+            else
+            {
+                foreach (var message in response.Messages)
+                {
+                    _snackBar.Add(message, Severity.Error);
+                }
             }
         }
     }
-
 }

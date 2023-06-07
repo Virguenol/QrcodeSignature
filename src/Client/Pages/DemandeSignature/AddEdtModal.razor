@@ -93,7 +93,7 @@
 </EditForm>
 
 @code{
-    
+
     [CascadingParameter] private MudDialogInstance MudDialog { get; set; }
     [CascadingParameter] private HubConnection HubConnection { get; set; }
 
@@ -120,7 +120,7 @@
 
     private IBrowserFile _file;
 
-     private async Task SubmitForm()
+    private async Task SubmitForm()
     {
         try
         { 
@@ -164,15 +164,26 @@
 
     private async Task CaptureFile()
     {
-        try
+        string updateContent = Localizer["Voulez-vous Ajouter ?"];
+        var parameters = new DialogParameters
         {
-            ModelDemande.FileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(_file.Name));
-            ModelDemande.FileData = await _file.GetAllBytes();
-        }
-        catch (Exception ex)
+          { nameof(Shared.Dialogs.ConfirmationDialog.ContentText), string.Format(updateContent) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.ConfirmationDialog>(Localizer["Aoujer"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
         {
-            errors.Add($"File: {_file.Name} Error: {ex.Message}");
-            throw;
+            try
+            {
+                ModelDemande.FileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(_file.Name));
+                ModelDemande.FileData = await _file.GetAllBytes();
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"File: {_file.Name} Error: {ex.Message}");
+                throw;
+            }
         }
     }
     public void Cancel()

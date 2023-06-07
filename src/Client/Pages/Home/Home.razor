@@ -174,9 +174,7 @@ else
                     _snackBar.Add(Localizer["Mise à jour lancé ..."], Severity.Info);
                     await InvokeClearApplicationCache();
                 }
-
             }
-
         }
         catch (HttpRequestException)
         {
@@ -204,7 +202,6 @@ else
     {
         await _jsRuntime.InvokeVoidAsync("ClearApplicationCache");
     }
-
 
 
 }

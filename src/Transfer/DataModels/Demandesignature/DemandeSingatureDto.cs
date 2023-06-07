@@ -21,6 +21,7 @@ namespace Grs.BioRestock.Transfer.DataModels.Demandesignature
         public DateTime DateSignature { get; set; }
         public DateTime DateAnnulation { get; set; }
         public DateTime DateEtablissement { get; set; }
+        public DateTime LastModifiedOn { get; set; }
         public DemandeStatut demandeStatut { get; set; } = DemandeStatut.Nouveau;
 
         /// <summary>

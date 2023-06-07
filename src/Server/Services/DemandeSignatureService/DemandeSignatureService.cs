@@ -110,7 +110,9 @@ namespace Grs.BioRestock.Server.Services.DemandeSignatureService
                 demande.Designation = demandeSignature.Designation;
                 demande.NomClient = demandeSignature.NomClient;
                 demande.FileUrl = demandeSignature.FileUrl;
-                demande.FileName = demandeSignature?.FileName;             
+                demande.FileName = demandeSignature?.FileName;
+                demande.demandeStatut = DemandeStatut.Nouveau;
+                demande.LastModifiedOn = DateTime.Now;
                 _context.DemandeSignatures.Update(demande);
                 await _context.SaveChangesAsync();
                 return await Result<string>.SuccessAsync("la demande a été modifier");

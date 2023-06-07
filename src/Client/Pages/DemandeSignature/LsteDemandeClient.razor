@@ -67,10 +67,10 @@ else
 *@                @if (context.demandeStatut != statutSigner)
                 {
                     <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary" Direction="Direction.Left" OffsetX="true">
-                        @if (context.demandeStatut != statutAnnuler)
-                        {
+                        @*@if (context.demandeStatut != statutAnnuler)
+                        {*@
                         <MudMenuItem OnClick="(() => InvokeModal(Convert.ToString(context.Id)))">@Localizer["Modifier"]</MudMenuItem>
-                        }
+                        @*}*@
                         @if (context.demandeStatut == statutAnnuler || context.demandeStatut == statutNouveau)
                         {
                             <MudMenuItem OnClick="@(() => SupprimerDemande(@context.Id))">Supprimer</MudMenuItem>
@@ -148,27 +148,49 @@ else
 
     public async Task SupprimerDemande(int demandeSignatureId)
     {
-        var response = await _demandeSignature.DeleteAsync(demandeSignatureId);
-        if (response == null)
+        string deleteContent = Localizer["voulez vous Supprimer"];
+        var parameters = new DialogParameters
+        {
+          { nameof(Shared.Dialogs.DeleteConfirmationDialog.ContentText), string.Format(deleteContent, demandeSignatureId) }
+        };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+            var dialog = _dialogService.Show<Shared.Dialogs.DeleteConfirmationDialog>(Localizer["Delete"], parameters, options);
+            var result = await dialog.Result;
+            if (!result.Cancelled)
+            {
+            var response = await _demandeSignature.DeleteAsync(demandeSignatureId);
+            if (response == null)
         {
             _snackBar.Add(response.Messages[0], Severity.Success);
             await GetDemande();
         }
-        else
+            else
         {
             foreach (var message in response.Messages)
             {
                 _snackBar.Add(message, Severity.Error);
             }
+        }
         }
     }
 
     public async Task AnnulerDemande(int demandeSignatureId)
     {
+        string deleteContent = Localizer["Voulez vous annuler"];
+        var parameters = new DialogParameters
+        {
+          { nameof(Shared.Dialogs.DeleteConfirmationDialog.ContentText), string.Format(deleteContent, demandeSignatureId) }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, DisableBackdropClick = true };
+        var dialog = _dialogService.Show<Shared.Dialogs.DeleteConfirmationDialog>(Localizer["Delete"], parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
         var response = await _demandeSignature.AnnuleAsync(demandeSignatureId);
         if (response == null)
         {
             _snackBar.Add(response.Messages[0], Severity.Success);
+                await GetDemande();
         }
         else
         {
@@ -177,7 +199,8 @@ else
                 _snackBar.Add(message, Severity.Error);
             }
         }
-    }
+        }
+     }
 
     private async Task InvokeModal(string id)
     {
@@ -202,6 +225,7 @@ else
         if (!result.Cancelled)
         {
             OnSearch("");
+            await GetDemande();
         }
     }
 

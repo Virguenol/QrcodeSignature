@@ -12,7 +12,7 @@
 	</MudNavLink>
 	
  
-			<MudListSubheader Class="py-1 px-2 my-1">@Localizer["Animation"]</MudListSubheader>
+			@*<MudListSubheader Class="py-1 px-2 my-1">@Localizer["Animation"]</MudListSubheader>*@
 
 	@*<MudNavLink Style="border-left:6px solid #b955c7" Href="/Session">
 			@Localizer["Animations"]
@@ -23,7 +23,7 @@
 	<MudNavLink Href="/account" Icon="@Icons.Material.Outlined.SupervisorAccount">
 		@Localizer["Mon compte"]
 	</MudNavLink>
-	<MudListSubheader Class="py-1 px-2 my-1">@Localizer["Gestion bon de retour"]</MudListSubheader>
+	<MudListSubheader Class="py-1 px-2 my-1">@Localizer["Demande Signature"]</MudListSubheader>
 	<MudNavLink Href="/demandesignature/client" Icon="@Icons.Material.Outlined.SupervisorAccount">
 		@Localizer["Demande Client"]
 	</MudNavLink>
@@ -42,12 +42,12 @@
 		{
 			<MudNavLink Href="/identity/roles" Icon="@Icons.Material.Outlined.Person">@Localizer["Rôles"]</MudNavLink>
 		}
-		@if (_canViewUsers)
+		@*@if (_canViewUsers)
 		{
 			<MudNavLink Href="/BonDeRetour/admin_bonderetour" Icon="@Icons.Material.Outlined.Book">
 				@Localizer["Bon de retour"]
 			</MudNavLink>
-		}
+		}*@
 		@if (_canViewUsers)
 		{
 			<MudNavLink Href="/demandesignature/liste" Icon="@Icons.Material.Outlined.Book">
@@ -57,7 +57,7 @@
 		 
 	}
 
-	@if (_canViewHangfire || _canViewSwagger)
+@*	@if (_canViewHangfire || _canViewSwagger)
 	{
 		<MudListSubheader Class="py-1 px-2 my-1">@Localizer["Infrastructure"]</MudListSubheader>
 		@if (_canViewHangfire)
@@ -80,7 +80,7 @@
 		}
 		
 
-	}
+	}*@
   @*  <MudListSubheader Class="py-1 px-2 my-1">@Localizer["Guide"]</MudListSubheader>
     <MudNavLink Href="/Tutorials" Icon="@Icons.Filled.VideoLibrary">
         @Localizer["Tutoriels"]
@@ -110,8 +110,6 @@
 		_canViewRoles = (await _authorizationService.AuthorizeAsync(_authenticationStateProviderUser, Permissions.Roles.View)).Succeeded;
 		_canViewUsers = (await _authorizationService.AuthorizeAsync(_authenticationStateProviderUser, Permissions.Users.View)).Succeeded;
 		_canViewAnimation = (await _authorizationService.AuthorizeAsync(_authenticationStateProviderUser, Permissions.Animation.View)).Succeeded;
- 
-
 
 	}
 
